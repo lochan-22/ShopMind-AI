@@ -1,0 +1,222 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+
+@import "tailwindcss";
+@config "../../tailwind.config.ts";
+
+@import "./tokens.css";
+@import "./components.css";
+
+/* ==========================================================================
+   ShopMind AI — Global base styles
+   ========================================================================== */
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    @apply border-border;
+  }
+
+  html {
+    @apply antialiased scroll-smooth;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply min-h-screen bg-background font-sans text-foreground text-body;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  #root {
+    @apply min-h-screen;
+  }
+
+  /* Typography scale utilities */
+  h1,
+  .text-h1 {
+    @apply text-h1 text-foreground;
+  }
+
+  h2,
+  .text-h2 {
+    @apply text-h2 text-foreground;
+  }
+
+  h3,
+  .text-h3 {
+    @apply text-h3 text-foreground;
+  }
+
+  h4,
+  .text-h4 {
+    @apply text-h4 text-foreground;
+  }
+
+  p {
+    @apply text-body text-foreground;
+  }
+
+  small,
+  .text-caption {
+    @apply text-caption text-muted;
+  }
+
+  .text-label {
+    @apply text-label text-muted-strong;
+  }
+
+  .text-overline {
+    @apply text-overline uppercase text-muted;
+  }
+
+  .text-display {
+    @apply text-display text-foreground tracking-tight;
+  }
+
+  .text-muted {
+    @apply text-muted;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  /* Focus ring for keyboard navigation */
+  :focus-visible {
+    @apply outline-none;
+  }
+
+  /* Selection */
+  ::selection {
+    @apply bg-accent-muted text-accent-900;
+  }
+
+  .dark ::selection {
+    @apply bg-accent-muted text-accent-100;
+  }
+}
+
+@layer utilities {
+  /* Transition presets */
+  .transition-fast {
+    transition-duration: var(--transition-duration-fast);
+    transition-timing-function: var(--ease-default);
+  }
+
+  .transition-base {
+    transition-duration: var(--transition-duration-base);
+    transition-timing-function: var(--ease-default);
+  }
+
+  .transition-slow {
+    transition-duration: var(--transition-duration-slow);
+    transition-timing-function: var(--ease-default);
+  }
+
+  .transition-spring {
+    transition-duration: var(--transition-duration-base);
+    transition-timing-function: var(--ease-spring);
+  }
+
+  /* Surface helpers */
+  .surface-card {
+    @apply bg-surface rounded-card border border-border shadow-card;
+  }
+
+  .surface-elevated {
+    @apply bg-surface-elevated rounded-card border border-border shadow-elevated;
+  }
+
+  .surface-subtle {
+    @apply bg-surface-subtle rounded-card;
+  }
+
+  /* AI gradient text */
+  .text-gradient-ai {
+    background: linear-gradient(
+      135deg,
+      var(--color-accent-500) 0%,
+      var(--color-secondary-500) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Container */
+  .container-app {
+    @apply mx-auto w-full max-w-7xl px-container;
+  }
+
+  /* Screen reader only */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  /* Entrance animations (modal, toast) */
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes zoom-in-95 {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes slide-in-from-top {
+    from {
+      opacity: 0;
+      transform: translateY(-0.5rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-in {
+    animation-fill-mode: both;
+  }
+
+  .fade-in {
+    animation-name: fade-in;
+  }
+
+  .zoom-in-95 {
+    animation-name: zoom-in-95;
+  }
+
+  .slide-in-from-top {
+    animation-name: slide-in-from-top;
+  }
+
+  .duration-base {
+    animation-duration: var(--transition-duration-base);
+    animation-timing-function: var(--ease-out);
+  }
+}

@@ -1,0 +1,290 @@
+/* ==========================================================================
+   ShopMind AI — Design Tokens
+   Clean, AI-inspired system (OpenAI × Perplexity × Linear)
+   ========================================================================== */
+
+@theme {
+  /* --------------------------------------------------------------------------
+     Typography
+     -------------------------------------------------------------------------- */
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo,
+    Consolas, "Liberation Mono", monospace;
+
+  /* Display — hero headings */
+  --text-display: 3.5rem;
+  --text-display--line-height: 1.08;
+  --text-display--letter-spacing: -0.035em;
+  --text-display--font-weight: 600;
+
+  /* Headings */
+  --text-h1: 2.25rem;
+  --text-h1--line-height: 1.15;
+  --text-h1--letter-spacing: -0.03em;
+  --text-h1--font-weight: 600;
+
+  --text-h2: 1.875rem;
+  --text-h2--line-height: 1.2;
+  --text-h2--letter-spacing: -0.025em;
+  --text-h2--font-weight: 600;
+
+  --text-h3: 1.5rem;
+  --text-h3--line-height: 1.25;
+  --text-h3--letter-spacing: -0.02em;
+  --text-h3--font-weight: 600;
+
+  --text-h4: 1.25rem;
+  --text-h4--line-height: 1.3;
+  --text-h4--letter-spacing: -0.015em;
+  --text-h4--font-weight: 600;
+
+  /* Body */
+  --text-body-lg: 1.125rem;
+  --text-body-lg--line-height: 1.65;
+  --text-body-lg--font-weight: 400;
+
+  --text-body: 1rem;
+  --text-body--line-height: 1.6;
+  --text-body--font-weight: 400;
+
+  --text-body-sm: 0.875rem;
+  --text-body-sm--line-height: 1.55;
+  --text-body-sm--font-weight: 400;
+
+  /* Labels & captions */
+  --text-label: 0.8125rem;
+  --text-label--line-height: 1.4;
+  --text-label--letter-spacing: 0.01em;
+  --text-label--font-weight: 500;
+
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1.45;
+  --text-caption--letter-spacing: 0.01em;
+  --text-caption--font-weight: 400;
+
+  --text-overline: 0.6875rem;
+  --text-overline--line-height: 1.3;
+  --text-overline--letter-spacing: 0.08em;
+  --text-overline--font-weight: 600;
+
+  /* --------------------------------------------------------------------------
+     Color palette — neutral surfaces
+     -------------------------------------------------------------------------- */
+  --color-background: #fafafa;
+  --color-foreground: #0c0c0d;
+  --color-surface: #ffffff;
+  --color-surface-subtle: #f4f4f5;
+  --color-surface-muted: #ececee;
+  --color-surface-elevated: #ffffff;
+  --color-surface-overlay: rgb(255 255 255 / 0.88);
+
+  --color-border: #e4e4e7;
+  --color-border-subtle: #f0f0f2;
+  --color-border-strong: #d4d4d8;
+
+  --color-muted: #71717a;
+  --color-muted-subtle: #a1a1aa;
+  --color-muted-strong: #52525b;
+
+  /* --------------------------------------------------------------------------
+     Color palette — brand accent (intelligent teal-emerald)
+     -------------------------------------------------------------------------- */
+  --color-accent-50: #ecfdf5;
+  --color-accent-100: #d1fae5;
+  --color-accent-200: #a7f3d0;
+  --color-accent-300: #6ee7b7;
+  --color-accent-400: #34d399;
+  --color-accent-500: #10b981;
+  --color-accent-600: #059669;
+  --color-accent-700: #047857;
+  --color-accent-800: #065f46;
+  --color-accent-900: #064e3b;
+  --color-accent-950: #022c22;
+
+  --color-accent: #10b981;
+  --color-accent-foreground: #ffffff;
+  --color-accent-muted: #ecfdf5;
+  --color-accent-subtle: #d1fae5;
+
+  /* Secondary — cool violet (Linear-inspired) */
+  --color-secondary-50: #f5f3ff;
+  --color-secondary-100: #ede9fe;
+  --color-secondary-200: #ddd6fe;
+  --color-secondary-300: #c4b5fd;
+  --color-secondary-400: #a78bfa;
+  --color-secondary-500: #8b5cf6;
+  --color-secondary-600: #7c3aed;
+  --color-secondary-700: #6d28d9;
+  --color-secondary-800: #5b21b6;
+  --color-secondary-900: #4c1d95;
+
+  --color-secondary: #8b5cf6;
+  --color-secondary-foreground: #ffffff;
+
+  /* Semantic */
+  --color-success: #16a34a;
+  --color-success-muted: #f0fdf4;
+  --color-warning: #d97706;
+  --color-warning-muted: #fffbeb;
+  --color-error: #dc2626;
+  --color-error-muted: #fef2f2;
+  --color-info: #2563eb;
+  --color-info-muted: #eff6ff;
+
+  /* AI glow / gradient stops */
+  --color-glow-accent: rgb(16 185 129 / 0.35);
+  --color-glow-secondary: rgb(139 92 246 / 0.25);
+
+  /* --------------------------------------------------------------------------
+     Spacing system (4px base grid)
+     -------------------------------------------------------------------------- */
+  --spacing-px: 1px;
+  --spacing-0: 0;
+  --spacing-0\.5: 0.125rem;
+  --spacing-1: 0.25rem;
+  --spacing-1\.5: 0.375rem;
+  --spacing-2: 0.5rem;
+  --spacing-2\.5: 0.625rem;
+  --spacing-3: 0.75rem;
+  --spacing-3\.5: 0.875rem;
+  --spacing-4: 1rem;
+  --spacing-5: 1.25rem;
+  --spacing-6: 1.5rem;
+  --spacing-7: 1.75rem;
+  --spacing-8: 2rem;
+  --spacing-9: 2.25rem;
+  --spacing-10: 2.5rem;
+  --spacing-11: 2.75rem;
+  --spacing-12: 3rem;
+  --spacing-14: 3.5rem;
+  --spacing-16: 4rem;
+  --spacing-18: 4.5rem;
+  --spacing-20: 5rem;
+  --spacing-24: 6rem;
+  --spacing-28: 7rem;
+  --spacing-32: 8rem;
+  --spacing-36: 9rem;
+  --spacing-40: 10rem;
+  --spacing-48: 12rem;
+  --spacing-56: 14rem;
+  --spacing-64: 16rem;
+
+  /* Semantic spacing aliases */
+  --spacing-section: 5rem;
+  --spacing-container: 1.5rem;
+  --spacing-card: 1.25rem;
+  --spacing-inline: 0.75rem;
+  --spacing-stack: 1rem;
+
+  /* --------------------------------------------------------------------------
+     Border radius
+     -------------------------------------------------------------------------- */
+  --radius-none: 0;
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* Semantic radius */
+  --radius-button: 0.5rem;
+  --radius-input: 0.5rem;
+  --radius-card: 0.75rem;
+  --radius-modal: 1rem;
+  --radius-pill: 9999px;
+
+  /* --------------------------------------------------------------------------
+     Shadows — soft, layered depth
+     -------------------------------------------------------------------------- */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.04);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.18);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.04);
+
+  /* AI-inspired glow shadows */
+  --shadow-glow-sm: 0 0 0 1px rgb(16 185 129 / 0.08), 0 2px 8px rgb(16 185 129 / 0.12);
+  --shadow-glow-md: 0 0 0 1px rgb(16 185 129 / 0.12), 0 4px 16px rgb(16 185 129 / 0.18);
+  --shadow-glow-lg: 0 0 0 1px rgb(16 185 129 / 0.15), 0 8px 32px rgb(16 185 129 / 0.22);
+  --shadow-glow-accent: 0 0 24px var(--color-glow-accent);
+  --shadow-glow-secondary: 0 0 24px var(--color-glow-secondary);
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.04), 0 0 0 1px rgb(0 0 0 / 0.04);
+  --shadow-elevated: 0 8px 30px rgb(0 0 0 / 0.06), 0 0 0 1px rgb(0 0 0 / 0.04);
+  --shadow-focus: 0 0 0 3px rgb(16 185 129 / 0.25);
+
+  /* --------------------------------------------------------------------------
+     Transitions & easing
+     -------------------------------------------------------------------------- */
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-snappy: cubic-bezier(0.25, 0.1, 0.25, 1);
+
+  --transition-duration-instant: 0ms;
+  --transition-duration-fast: 120ms;
+  --transition-duration-base: 200ms;
+  --transition-duration-slow: 300ms;
+  --transition-duration-slower: 450ms;
+
+  --default-transition-duration: 200ms;
+  --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* --------------------------------------------------------------------------
+   Dark mode tokens
+   -------------------------------------------------------------------------- */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer theme {
+  .dark {
+    --color-background: #09090b;
+    --color-foreground: #fafafa;
+    --color-surface: #0f0f12;
+    --color-surface-subtle: #18181b;
+    --color-surface-muted: #27272a;
+    --color-surface-elevated: #141417;
+    --color-surface-overlay: rgb(15 15 18 / 0.92);
+
+    --color-border: #27272a;
+    --color-border-subtle: #1f1f23;
+    --color-border-strong: #3f3f46;
+
+    --color-muted: #a1a1aa;
+    --color-muted-subtle: #71717a;
+    --color-muted-strong: #d4d4d8;
+
+    --color-accent: #34d399;
+    --color-accent-foreground: #022c22;
+    --color-accent-muted: rgb(16 185 129 / 0.12);
+    --color-accent-subtle: rgb(16 185 129 / 0.08);
+
+    --color-secondary: #a78bfa;
+    --color-secondary-foreground: #1e1b4b;
+
+    --color-success-muted: rgb(22 163 74 / 0.12);
+    --color-warning-muted: rgb(217 119 6 / 0.12);
+    --color-error-muted: rgb(220 38 38 / 0.12);
+    --color-info-muted: rgb(37 99 235 / 0.12);
+
+    --color-glow-accent: rgb(52 211 153 / 0.2);
+    --color-glow-secondary: rgb(167 139 250 / 0.18);
+
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.45), 0 2px 4px -2px rgb(0 0 0 / 0.35);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.35);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.55), 0 8px 10px -6px rgb(0 0 0 / 0.4);
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 0 0 1px rgb(255 255 255 / 0.06);
+    --shadow-elevated: 0 8px 30px rgb(0 0 0 / 0.45), 0 0 0 1px rgb(255 255 255 / 0.06);
+    --shadow-focus: 0 0 0 3px rgb(52 211 153 / 0.35);
+  }
+}

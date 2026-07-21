@@ -1,0 +1,721 @@
+/* ==========================================================================
+   ShopMind AI — Component utilities (CSS-only, no React)
+   ========================================================================== */
+
+@layer components {
+  /* --------------------------------------------------------------------------
+     Button — base
+     -------------------------------------------------------------------------- */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2;
+    @apply font-medium whitespace-nowrap select-none;
+    @apply rounded-button border border-transparent;
+    @apply transition-all duration-base ease-default;
+    @apply focus-visible:outline-none focus-visible:shadow-focus;
+    @apply disabled:pointer-events-none disabled:opacity-45;
+  }
+
+  /* --------------------------------------------------------------------------
+     Button — sizes
+     -------------------------------------------------------------------------- */
+  .btn-xs {
+    @apply h-7 px-2.5 text-caption rounded-sm;
+  }
+
+  .btn-sm {
+    @apply h-8 px-3 text-body-sm rounded-button;
+  }
+
+  .btn-md {
+    @apply h-10 px-4 text-body-sm;
+  }
+
+  .btn-lg {
+    @apply h-11 px-5 text-body;
+  }
+
+  .btn-xl {
+    @apply h-12 px-6 text-body-lg;
+  }
+
+  /* Icon-only buttons */
+  .btn-icon-xs {
+    @apply size-7 p-0;
+  }
+
+  .btn-icon-sm {
+    @apply size-8 p-0;
+  }
+
+  .btn-icon-md {
+    @apply size-10 p-0;
+  }
+
+  .btn-icon-lg {
+    @apply size-11 p-0;
+  }
+
+  /* --------------------------------------------------------------------------
+     Button — variants
+     -------------------------------------------------------------------------- */
+  .btn-primary {
+    @apply bg-accent text-accent-foreground;
+    @apply shadow-sm hover:bg-accent-600 active:bg-accent-700;
+    @apply hover:shadow-glow-sm active:shadow-none;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground;
+    @apply shadow-sm hover:bg-secondary-600 active:bg-secondary-700;
+  }
+
+  .btn-outline {
+    @apply bg-surface text-foreground border-border;
+    @apply shadow-xs hover:bg-surface-subtle active:bg-surface-muted;
+    @apply hover:border-border-strong;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent text-foreground;
+    @apply hover:bg-surface-subtle active:bg-surface-muted;
+  }
+
+  .btn-soft {
+    @apply bg-accent-muted text-accent-700;
+    @apply hover:bg-accent-subtle active:bg-accent-200;
+  }
+
+  .dark .btn-soft {
+    @apply text-accent;
+  }
+
+  .btn-destructive {
+    @apply bg-error text-white;
+    @apply shadow-sm hover:bg-red-700 active:bg-red-800;
+  }
+
+  .btn-link {
+    @apply h-auto p-0 bg-transparent text-accent;
+    @apply underline-offset-4 hover:underline active:text-accent-700;
+    @apply shadow-none focus-visible:shadow-focus;
+  }
+
+  /* AI accent — gradient CTA for key actions */
+  .btn-ai {
+    @apply text-white border-0;
+    background: linear-gradient(
+      135deg,
+      var(--color-accent-500) 0%,
+      var(--color-secondary-500) 100%
+    );
+    box-shadow: var(--shadow-glow-sm);
+  }
+
+  .btn-ai:hover {
+    background: linear-gradient(
+      135deg,
+      var(--color-accent-600) 0%,
+      var(--color-secondary-600) 100%
+    );
+    box-shadow: var(--shadow-glow-md);
+  }
+
+  .btn-ai:active {
+    box-shadow: var(--shadow-xs);
+  }
+
+  /* --------------------------------------------------------------------------
+     Button — modifiers
+     -------------------------------------------------------------------------- */
+  .btn-block {
+    @apply w-full;
+  }
+
+  .btn-pill {
+    @apply rounded-pill;
+  }
+
+  /* --------------------------------------------------------------------------
+     Toast
+     -------------------------------------------------------------------------- */
+  .toast {
+    @apply flex w-full items-start gap-3 rounded-card border p-4 shadow-elevated;
+  }
+
+  .toast-icon {
+    @apply mt-0.5 inline-flex shrink-0;
+  }
+
+  .toast-dismiss {
+    @apply -mr-1 -mt-1 shrink-0;
+  }
+
+  /* --------------------------------------------------------------------------
+     Agent — voice button
+     -------------------------------------------------------------------------- */
+  .agent-voice-btn {
+    @apply inline-flex items-center justify-center rounded-full border border-border;
+    @apply bg-surface text-foreground shadow-sm;
+    @apply transition-all duration-base ease-default;
+    @apply focus-visible:outline-none focus-visible:shadow-focus;
+    @apply disabled:pointer-events-none disabled:opacity-45;
+    @apply hover:bg-surface-subtle active:bg-surface-muted;
+  }
+
+  .agent-voice-btn-sm {
+    @apply size-10;
+  }
+
+  .agent-voice-btn-md {
+    @apply size-12;
+  }
+
+  .agent-voice-btn-lg {
+    @apply size-14;
+  }
+
+  .agent-voice-btn-listening {
+    @apply border-accent bg-accent-muted text-accent-700;
+    box-shadow: var(--shadow-glow-sm);
+  }
+
+  .dark .agent-voice-btn-listening {
+    @apply text-accent;
+  }
+
+  .agent-voice-btn-processing {
+    @apply border-border bg-surface-subtle;
+  }
+
+  /* --------------------------------------------------------------------------
+     Agent — listening animation
+     -------------------------------------------------------------------------- */
+  .agent-listening {
+    @apply inline-flex items-center justify-center gap-0.5;
+  }
+
+  .agent-listening-sm {
+    @apply h-3;
+  }
+
+  .agent-listening-md {
+    @apply h-4;
+  }
+
+  .agent-listening-lg {
+    @apply h-5;
+  }
+
+  .agent-listening-bar {
+    @apply w-0.5 rounded-full bg-current;
+    animation: agent-listen 1s ease-in-out infinite;
+  }
+
+  .agent-listening-sm .agent-listening-bar {
+    @apply h-2;
+  }
+
+  .agent-listening-md .agent-listening-bar {
+    @apply h-3;
+  }
+
+  .agent-listening-lg .agent-listening-bar {
+    @apply h-4;
+  }
+
+  /* --------------------------------------------------------------------------
+     Agent — thinking animation
+     -------------------------------------------------------------------------- */
+  .agent-thinking {
+    @apply inline-flex items-center gap-1;
+  }
+
+  .agent-thinking-with-label {
+    @apply gap-2;
+  }
+
+  .agent-thinking-dot {
+    @apply rounded-full bg-current opacity-70;
+    animation: agent-think 1.2s ease-in-out infinite;
+  }
+
+  .agent-thinking-sm .agent-thinking-dot {
+    @apply size-1;
+  }
+
+  .agent-thinking-md .agent-thinking-dot {
+    @apply size-1.5;
+  }
+
+  .agent-thinking-lg .agent-thinking-dot {
+    @apply size-2;
+  }
+
+  .agent-thinking-label {
+    @apply text-body-sm text-muted;
+  }
+
+  /* --------------------------------------------------------------------------
+     Agent — chat bubbles
+     -------------------------------------------------------------------------- */
+  .agent-bubble {
+    @apply flex gap-3 max-w-2xl;
+  }
+
+  .agent-bubble-user {
+    @apply ml-auto flex-row-reverse;
+  }
+
+  .agent-bubble-agent {
+    @apply mr-auto;
+  }
+
+  .agent-bubble-avatar {
+    @apply flex size-8 shrink-0 items-center justify-center rounded-full;
+    @apply bg-accent-muted text-accent-700;
+  }
+
+  .dark .agent-bubble-avatar {
+    @apply text-accent;
+  }
+
+  .agent-bubble-content {
+    @apply flex min-w-0 flex-col gap-1;
+  }
+
+  .agent-bubble-header {
+    @apply flex items-center gap-2;
+  }
+
+  .agent-bubble-user .agent-bubble-header {
+    @apply flex-row-reverse;
+  }
+
+  .agent-bubble-author {
+    @apply text-label font-medium text-foreground;
+  }
+
+  .agent-bubble-time {
+    @apply text-caption text-muted-subtle;
+  }
+
+  .agent-bubble-body {
+    @apply rounded-card border border-border px-4 py-3 text-body-sm;
+  }
+
+  .agent-bubble-user .agent-bubble-body {
+    @apply bg-accent text-accent-foreground border-transparent;
+  }
+
+  .agent-bubble-agent .agent-bubble-body {
+    @apply bg-surface-subtle text-foreground;
+  }
+
+  /* --------------------------------------------------------------------------
+     Agent — response
+     -------------------------------------------------------------------------- */
+  .agent-response-text {
+    @apply flex flex-col gap-3 text-body-sm leading-relaxed;
+  }
+
+  .agent-response-list {
+    @apply list-decimal space-y-1 pl-5;
+  }
+
+  .agent-response-sources {
+    @apply mt-4 flex flex-col gap-2 border-t border-border-subtle pt-3;
+  }
+
+  .agent-response-sources-label {
+    @apply text-overline uppercase text-muted;
+  }
+
+  .agent-response-sources-list {
+    @apply flex flex-wrap gap-1.5;
+  }
+
+  .agent-response-source {
+    @apply cursor-default;
+  }
+
+  /* --------------------------------------------------------------------------
+     Product — image
+     -------------------------------------------------------------------------- */
+  .product-image {
+    @apply relative overflow-hidden rounded-card bg-surface-subtle;
+  }
+
+  .product-image-square {
+    @apply aspect-square w-full;
+  }
+
+  .product-image-portrait {
+    @apply aspect-[3/4] w-full;
+  }
+
+  .product-image-landscape {
+    @apply aspect-[4/3] w-full;
+  }
+
+  .product-image-sm {
+    @apply max-w-32;
+  }
+
+  .product-image-md {
+    @apply max-w-full;
+  }
+
+  .product-image-lg {
+    @apply max-w-md;
+  }
+
+  .product-image-img {
+    @apply size-full object-cover;
+  }
+
+  .product-image-placeholder {
+    @apply flex size-full items-center justify-center;
+  }
+
+  .product-image-placeholder-label {
+    @apply text-h4 font-semibold text-white/90;
+  }
+
+  /* --------------------------------------------------------------------------
+     Product — price
+     -------------------------------------------------------------------------- */
+  .product-price {
+    @apply inline-flex flex-wrap items-baseline gap-x-2 gap-y-0.5;
+  }
+
+  .product-price-current {
+    @apply font-semibold text-foreground;
+  }
+
+  .product-price-sm .product-price-current {
+    @apply text-body-sm;
+  }
+
+  .product-price-md .product-price-current {
+    @apply text-body;
+  }
+
+  .product-price-lg .product-price-current {
+    @apply text-h4;
+  }
+
+  .product-price-compare {
+    @apply text-body-sm text-muted line-through;
+  }
+
+  .product-price-discount {
+    @apply text-caption font-medium text-error;
+  }
+
+  /* --------------------------------------------------------------------------
+     Product — rating
+     -------------------------------------------------------------------------- */
+  .product-rating {
+    @apply inline-flex items-center gap-1.5 text-warning;
+  }
+
+  .product-rating-stars {
+    @apply inline-flex items-center gap-0.5;
+  }
+
+  .product-rating-star {
+    @apply shrink-0;
+  }
+
+  .product-rating-sm .product-rating-star {
+    @apply size-3;
+  }
+
+  .product-rating-md .product-rating-star {
+    @apply size-3.5;
+  }
+
+  .product-rating-lg .product-rating-star {
+    @apply size-4;
+  }
+
+  .product-rating-star-empty {
+    @apply text-border-strong;
+  }
+
+  .product-rating-value {
+    @apply text-label font-medium text-foreground;
+  }
+
+  .product-rating-count {
+    @apply text-caption text-muted;
+  }
+
+  /* --------------------------------------------------------------------------
+     Product — card & grid
+     -------------------------------------------------------------------------- */
+  .product-card {
+    @apply flex flex-col overflow-hidden rounded-card border border-border bg-surface shadow-card;
+  }
+
+  .product-card-interactive {
+    @apply transition-all duration-200 ease-out cursor-pointer;
+    @apply hover:border-border-strong hover:shadow-md;
+  }
+
+  .product-card-media {
+    @apply relative;
+  }
+
+  .product-card-badge {
+    @apply absolute top-2 left-2 z-10;
+  }
+
+  .product-card-body {
+    @apply flex flex-col gap-2 p-card;
+  }
+
+  .product-card-category {
+    @apply text-overline uppercase text-muted;
+  }
+
+  .product-card-title {
+    @apply text-body font-medium text-foreground line-clamp-2;
+  }
+
+  .product-card-description {
+    @apply text-body-sm text-muted line-clamp-2;
+  }
+
+  .product-grid {
+    @apply grid gap-4;
+  }
+
+  .product-grid-cols-2 {
+    @apply grid-cols-1 sm:grid-cols-2;
+  }
+
+  .product-grid-cols-3 {
+    @apply grid-cols-1 sm:grid-cols-2 lg:grid-cols-3;
+  }
+
+  .product-grid-cols-4 {
+    @apply grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
+
+  .product-grid-cols-auto {
+    @apply grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
+
+  /* --------------------------------------------------------------------------
+     Search — bar
+     -------------------------------------------------------------------------- */
+  .search-bar {
+    @apply relative flex w-full items-center rounded-input border border-border bg-surface;
+    @apply transition-all duration-200 ease-out focus-within:border-accent focus-within:shadow-focus;
+  }
+
+  .search-bar-sm {
+    @apply h-8;
+  }
+
+  .search-bar-md {
+    @apply h-10;
+  }
+
+  .search-bar-lg {
+    @apply h-11;
+  }
+
+  .search-bar-icon {
+    @apply flex shrink-0 items-center pl-3 text-muted;
+  }
+
+  .search-bar-input {
+    @apply w-full min-w-0 bg-transparent px-2 text-body-sm text-foreground;
+    @apply placeholder:text-muted-subtle focus:outline-none;
+  }
+
+  .search-bar-lg .search-bar-input {
+    @apply text-body;
+  }
+
+  .search-bar-clear {
+    @apply mr-1 shrink-0;
+  }
+
+  /* --------------------------------------------------------------------------
+     Search — suggestions
+     -------------------------------------------------------------------------- */
+  .search-suggestions {
+    @apply overflow-hidden rounded-card border border-border bg-surface shadow-elevated;
+  }
+
+  .search-suggestions-empty {
+    @apply p-4 text-body-sm text-muted;
+  }
+
+  .search-suggestions-group {
+    @apply border-b border-border-subtle last:border-b-0;
+  }
+
+  .search-suggestions-group-label {
+    @apply px-3 py-2 text-overline uppercase text-muted;
+  }
+
+  .search-suggestions-list {
+    @apply flex flex-col;
+  }
+
+  .search-suggestions-item {
+    @apply flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-body-sm;
+    @apply text-foreground transition-all duration-200 ease-out hover:bg-surface-subtle;
+    @apply focus-visible:outline-none focus-visible:bg-surface-subtle;
+  }
+
+  .search-suggestions-item-highlighted {
+    @apply bg-surface-subtle;
+  }
+
+  .search-suggestions-label {
+    @apply min-w-0 flex-1 truncate;
+  }
+
+  .search-suggestions-highlight {
+    @apply bg-accent-muted text-accent-700 rounded-sm px-0.5 font-medium;
+  }
+
+  .dark .search-suggestions-highlight {
+    @apply text-accent;
+  }
+
+  /* --------------------------------------------------------------------------
+     Search — filters & categories
+     -------------------------------------------------------------------------- */
+  .filter-bar {
+    @apply flex flex-wrap items-end gap-3;
+  }
+
+  .filter-bar-item {
+    @apply flex flex-col gap-1;
+  }
+
+  .filter-bar-label {
+    @apply text-label text-muted-strong;
+  }
+
+  .filter-bar-select {
+    @apply h-9 min-w-[8rem] rounded-input border border-border bg-surface px-3;
+    @apply text-body-sm text-foreground transition-all duration-200 ease-out;
+    @apply focus:border-accent focus:shadow-focus focus:outline-none;
+  }
+
+  .filter-bar-clear {
+    @apply h-9 px-3 text-body-sm font-medium text-accent;
+    @apply transition-all duration-200 ease-out hover:text-accent-700;
+  }
+
+  .category-chips {
+    @apply flex flex-wrap gap-2;
+  }
+
+  .category-chip {
+    @apply inline-flex items-center gap-1.5 rounded-pill border border-border;
+    @apply bg-surface px-3 py-1.5 text-body-sm font-medium text-muted-strong;
+    @apply transition-all duration-200 ease-out hover:border-border-strong hover:bg-surface-subtle;
+    @apply focus-visible:outline-none focus-visible:shadow-focus;
+  }
+
+  .category-chip-selected {
+    @apply border-accent bg-accent-muted text-accent-700;
+  }
+
+  .dark .category-chip-selected {
+    @apply text-accent;
+  }
+
+  .category-chip-count {
+    @apply text-caption text-muted;
+  }
+
+  .category-chip-selected .category-chip-count {
+    @apply text-accent-700/70;
+  }
+
+  .dark .category-chip-selected .category-chip-count {
+    @apply text-accent/70;
+  }
+
+  /* --------------------------------------------------------------------------
+     Search — results header
+     -------------------------------------------------------------------------- */
+  .search-results-header {
+    @apply flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between;
+  }
+
+  .search-results-header-info {
+    @apply flex flex-col gap-1;
+  }
+
+  .search-results-header-title {
+    @apply text-h4 font-semibold text-foreground;
+  }
+
+  .search-results-header-query {
+    background: linear-gradient(
+      135deg,
+      var(--color-accent-500) 0%,
+      var(--color-secondary-500) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .search-results-header-count {
+    @apply text-body-sm text-muted;
+  }
+
+  .search-results-header-loading {
+    @apply text-muted;
+  }
+
+  .search-results-header-sort {
+    @apply flex items-center gap-2;
+  }
+
+  .search-results-header-sort-label {
+    @apply text-label text-muted-strong whitespace-nowrap;
+  }
+
+  .search-results-header-sort-select {
+    @apply h-9 min-w-[10rem] rounded-input border border-border bg-surface px-3;
+    @apply text-body-sm text-foreground transition-all duration-200 ease-out;
+    @apply focus:border-accent focus:shadow-focus focus:outline-none;
+  }
+}
+
+@keyframes agent-listen {
+  0%,
+  100% {
+    transform: scaleY(0.4);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes agent-think {
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
