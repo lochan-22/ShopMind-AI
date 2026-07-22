@@ -1,12 +1,6 @@
-import MainLayout from "./layouts/MainLayout";
-import Home from "./pages/Home";
+import React from "react";
+import AppRoutes from "./routes/AppRoutes";
 
-function App() {
-  return (
-    <MainLayout>
-      <Home />
-    </MainLayout>
-  );
-}
+const App: React.FC = () => <AppRoutes />;
 
 export default App;

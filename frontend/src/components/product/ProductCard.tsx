@@ -1,84 +1,76 @@
-import { forwardRef, type HTMLAttributes } from "react";
+import React from "react";
+import type { Product } from "./types";
+import { Star, CheckCircle2, XCircle } from "lucide-react";
 
-import { ProductBadge } from "@/components/product/ProductBadge";
-import { ProductImage } from "@/components/product/ProductImage";
-import { ProductPrice } from "@/components/product/ProductPrice";
-import { ProductRating } from "@/components/product/ProductRating";
-import type { Product } from "@/components/product/types";
-import { cn } from "@/utils/cn";
-
-export interface ProductCardProps extends HTMLAttributes<HTMLElement> {
+interface ProductCardProps {
   product: Product;
-  interactive?: boolean;
-  showDescription?: boolean;
 }
 
-export const ProductCard = forwardRef<HTMLElement, ProductCardProps>(
-  (
-    {
-      product,
-      interactive = true,
-      showDescription = false,
-      className,
-      ...props
-    },
-    ref,
-  ) => {
-    const badgeType =
-      product.inStock === false ? "out-of-stock" : product.badge;
-
-    return (
-      <article
-        ref={ref}
-        aria-label={product.name}
-        className={cn(
-          "product-card",
-          interactive && "product-card-interactive",
-          className,
+export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+  return (
+    <div className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white/80 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-200/60">
+      {/* Image */}
+      <div className="relative aspect-square w-full overflow-hidden bg-slate-50">
+        <img
+          src={product.image}
+          alt={product.name}
+          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+        />
+        <span className="absolute left-3 top-3 rounded-lg bg-white/90 px-2 py-1 text-[11px] font-medium text-slate-600 shadow-sm">
+          {product.category}
+        </span>
+        {product.stock ? (
+          <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-600 shadow-sm">
+            <CheckCircle2 className="h-3 w-3" />
+            In Stock
+          </span>
+        ) : (
+          <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-lg bg-rose-50 px-2 py-1 text-[11px] font-medium text-rose-600 shadow-sm">
+            <XCircle className="h-3 w-3" />
+            Out of Stock
+          </span>
         )}
-        {...props}
-      >
-        <div className="product-card-media">
-          <ProductImage
-            alt={product.name}
-            placeholderColor={product.imageColor}
-            placeholderLabel={product.imageLabel}
-            aspect="square"
-            size="md"
-          />
-          {badgeType && (
-            <ProductBadge
-              type={badgeType}
-              label={product.badgeLabel}
-              className="product-card-badge"
-            />
-          )}
+      </div>
+
+      {/* Content */}
+      <div className="flex flex-1 flex-col p-4">
+        <p className="text-xs font-medium uppercase tracking-wide text-indigo-500">
+          {product.brand}
+        </p>
+        <h3 className="mt-1 line-clamp-2 text-sm font-semibold text-slate-900">
+          {product.name}
+        </h3>
+
+        <p className="mt-1.5 line-clamp-2 text-xs text-slate-500">
+          {product.description}
+        </p>
+
+        <div className="mt-2.5 flex items-center gap-1.5">
+          <div className="flex items-center gap-1 rounded-lg bg-amber-50 px-2 py-0.5">
+            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+            <span className="text-xs font-semibold text-amber-700">
+              {product.rating}
+            </span>
+          </div>
+          <span className="text-xs text-slate-400">
+            ({product.review_count.toLocaleString("en-IN")})
+          </span>
         </div>
 
-        <div className="product-card-body">
-          <p className="product-card-category">{product.category}</p>
-          <h3 className="product-card-title">{product.name}</h3>
-
-          {showDescription && product.description && (
-            <p className="product-card-description">{product.description}</p>
-          )}
-
-          <ProductRating
-            rating={product.rating}
-            reviewCount={product.reviewCount}
-            size="sm"
-          />
-
-          <ProductPrice
-            price={product.price}
-            compareAtPrice={product.compareAtPrice}
-            currency={product.currency}
-            size="md"
-          />
+        <div className="mt-3 flex items-center justify-between">
+          <span className="text-base font-bold text-slate-900">
+            ₹{product.price.toLocaleString("en-IN")}
+          </span>
         </div>
-      </article>
-    );
-  },
-);
 
-ProductCard.displayName = "ProductCard";
+        <button
+          type="button"
+          disabled={!product.stock}
+          className="mt-4 w-full rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2.5 text-sm font-medium text-white shadow-md shadow-indigo-300/30 transition-all hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {product.stock ? "View Details" : "Out of Stock"}
+        </button>
+      </div>
+    </div>
+  );
+};
