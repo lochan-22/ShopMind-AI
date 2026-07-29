@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
 import {
   ArrowLeft,
   Star,
@@ -13,10 +14,12 @@ import {
 } from "lucide-react";
 import Navbar from "../components/common/Navbar";
 import { getProduct } from "../services/productService";
-import type { Product } from "../components/product/types";
+import type { Product } from "../services/productService";
+import { useCart } from "../contexts/CartContext";
 const ProductDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { addToCart } = useCart();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -30,14 +33,24 @@ const ProductDetails: React.FC = () => {
         return;
       }
 
+      if (!Number.isInteger(Number(id))) {
+        setError("Invalid product id.");
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       setError(null);
 
       try {
         const data = await getProduct(Number(id));
         setProduct(data);
-      } catch (err) {
-        setError("Failed to load product. Please try again later.");
+      } catch (error) {
+        setError(
+          axios.isAxiosError(error) && error.response?.status === 404
+            ? "Product not found."
+            : "Failed to load product. Please try again later.",
+        );
       } finally {
         setLoading(false);
       }
@@ -48,6 +61,13 @@ const ProductDetails: React.FC = () => {
 
   const handleBack = () => {
     navigate(-1);
+  };
+
+  const handleAddToCart = () => {
+    if (!product) return;
+
+    addToCart(product);
+    navigate("/cart");
   };
 
   return (
@@ -93,11 +113,11 @@ const ProductDetails: React.FC = () => {
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
             {/* Image */}
             <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg shadow-slate-200/50">
-              <img
-                src={product.image}
-                alt={product.name}
-                className="aspect-square w-full object-cover"
-              />
+              {product.image ? (
+                <img src={product.image} alt={product.name} className="aspect-square w-full object-cover" />
+              ) : (
+                <div className="flex aspect-square w-full items-center justify-center bg-slate-100 text-slate-400">No Image</div>
+              )}
             </div>
 
             {/* Product Info */}
@@ -152,10 +172,12 @@ const ProductDetails: React.FC = () => {
               <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <button
                   type="button"
+                  onClick={handleAddToCart}
+                  disabled={!product.stock}
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-3 text-sm font-medium text-white shadow-lg shadow-indigo-300/40 transition-all hover:shadow-xl hover:-translate-y-0.5"
                 >
                   <ShoppingCart className="h-4 w-4" />
-                  Add to Cart
+                  {product.stock ? "Add to Cart" : "Out of Stock"}
                 </button>
                 <button
                   type="button"

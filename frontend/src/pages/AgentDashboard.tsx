@@ -1,5 +1,5 @@
 import React from "react";
-import type { Product } from "../components/product/types";
+import type { Product } from "../services/productService";
 import Navbar from "../components/common/Navbar";
 import { ProductCard } from "../components/product/ProductCard";
 import {
@@ -23,18 +23,16 @@ import {
 } from "lucide-react";
 
 const recommendedProduct: Product = {
-  id: "p-1001",
+  id: 1001,
   name: "WH-1000XM5 Wireless Noise Cancelling Headphones",
-  category: "Sony Headphones",
+  brand: "Sony",
+  category: "Headphones",
   price: 4499,
-  compareAtPrice: 5999,
-  currency: "INR",
   rating: 4.7,
-  reviewCount: 3245,
-  imageColor: "#1e293b",
-  imageLabel: "Sony WH-1000XM5",
-  badgeLabel: "AI Recommended",
-  inStock: true,
+  review_count: 3245,
+  image: null,
+  description: "Premium wireless noise-cancelling headphones.",
+  stock: true,
 };
 
 const timelineSteps: string[] = [

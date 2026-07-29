@@ -54,7 +54,7 @@ export const ProductImage = forwardRef<HTMLDivElement, ProductImageProps>(
         )}
         {...props}
       >
-        {src ? (
+        {src && src.trim() !== "" ? (
           <img
             src={src}
             alt={alt}

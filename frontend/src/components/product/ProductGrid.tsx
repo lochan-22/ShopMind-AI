@@ -1,6 +1,5 @@
 import { forwardRef, type HTMLAttributes } from "react";
 
-import { MOCK_PRODUCTS } from "@/components/product/mock";
 import { ProductCard } from "@/components/product/ProductCard";
 import type { Product } from "@/components/product/types";
 import { cn } from "@/utils/cn";
@@ -23,7 +22,7 @@ export interface ProductGridProps extends HTMLAttributes<HTMLDivElement> {
 export const ProductGrid = forwardRef<HTMLDivElement, ProductGridProps>(
   (
     {
-      products = MOCK_PRODUCTS,
+      products = [],
       columns = "auto",
       showDescription = false,
       className,

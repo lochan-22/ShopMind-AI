@@ -1,181 +1,303 @@
-from typing import List, Optional, Dict, Any
+"""
+backend/app/services/product_service.py
 
+ShopMind AI - Product Service
+
+This module provides product-related services for ShopMind AI, including
+a mock in-memory product catalog and a reusable filter_products() function
+that filters products by brand, category, budget, and rating.
+
+NOTE: This uses mock/static product data. No external database or API
+integration is wired in yet.
+"""
+
+from typing import Optional, List, Dict, Any
+
+
+# ---------------------------------------------------------------------------
+# Mock product catalog
+# ---------------------------------------------------------------------------
 
 MOCK_PRODUCTS: List[Dict[str, Any]] = [
     {
         "id": 1,
-        "name": "Sony WH-CH520",
+        "name": "Sony WH-CH520 Wireless Headphones",
         "brand": "Sony",
         "category": "Headphones",
-        "price": 4490.00,
-        "rating": 4.1,
-        "review_count": 2310,
-        "description": "Budget-friendly wireless headphones with up to 50 hours of battery life.",
+        "price": 4499,
+        "rating": 4.3,
+        "review_count": 12480,
+        "description": "Lightweight on-ear wireless headphones with up to 50 hours of battery life and quick charging support.",
         "stock": True,
-        "image": "https://placehold.co/400x400",
+        "image": None,
     },
     {
         "id": 2,
-        "name": "Sony WH-1000XM5",
+        "name": "Sony WH-1000XM4 Wireless Headphones",
         "brand": "Sony",
         "category": "Headphones",
-        "price": 29990.00,
+        "price": 24999,
         "rating": 4.7,
-        "review_count": 3245,
+        "review_count": 34210,
         "description": "Industry-leading noise cancellation with premium sound quality and 30-hour battery life.",
         "stock": True,
-        "image": "https://placehold.co/400x400",
+        "image": None,
     },
     {
         "id": 3,
-        "name": "Apple AirPods Pro",
-        "brand": "Apple",
-        "category": "Earbuds",
-        "price": 24900.00,
-        "rating": 4.6,
-        "review_count": 4102,
-        "description": "Active noise cancellation earbuds with adaptive transparency and spatial audio.",
+        "name": "Boat Rockerz 450 Headphones",
+        "brand": "Boat",
+        "category": "Headphones",
+        "price": 1499,
+        "rating": 4.1,
+        "review_count": 58900,
+        "description": "On-ear wireless headphones with 40mm drivers and up to 15 hours of battery backup.",
         "stock": True,
-        "image": "https://placehold.co/400x400",
+        "image": None,
     },
     {
         "id": 4,
-        "name": "Samsung Galaxy Buds2 Pro",
-        "brand": "Samsung",
-        "category": "Earbuds",
-        "price": 17999.00,
+        "name": "JBL Tune 760NC Headphones",
+        "brand": "JBL",
+        "category": "Headphones",
+        "price": 4999,
         "rating": 4.4,
-        "review_count": 1876,
-        "description": "Compact earbuds with intelligent active noise cancellation and 360 audio.",
+        "review_count": 9870,
+        "description": "Active noise cancelling headphones with pure bass sound and hands-free calling.",
         "stock": True,
-        "image": "https://placehold.co/400x400",
+        "image": None,
     },
     {
         "id": 5,
-        "name": "JBL Tune 770NC",
-        "brand": "JBL",
+        "name": "Samsung Galaxy Buds2",
+        "brand": "Samsung",
         "category": "Headphones",
-        "price": 6999.00,
-        "rating": 4.3,
-        "review_count": 987,
-        "description": "Adaptive noise cancelling headphones with up to 70 hours of battery life.",
+        "price": 8999,
+        "rating": 4.2,
+        "review_count": 15600,
+        "description": "Compact true wireless earbuds with active noise cancellation and rich sound.",
         "stock": True,
-        "image": "https://placehold.co/400x400",
+        "image": None,
     },
     {
         "id": 6,
-        "name": "Logitech M331 Silent Plus Mouse",
-        "brand": "Logitech",
-        "category": "Accessories",
-        "price": 1295.00,
-        "rating": 4.5,
-        "review_count": 6234,
-        "description": "Wireless silent mouse with 2.4GHz connectivity and 24-month battery life.",
-        "stock": True,
-        "image": "https://placehold.co/400x400",
+        "name": "Sennheiser HD 350BT",
+        "brand": "Sennheiser",
+        "category": "Headphones",
+        "price": 6990,
+        "rating": 4.0,
+        "review_count": 3210,
+        "description": "Over-ear wireless headphones with customizable sound via Sennheiser Smart Control app.",
+        "stock": False,
+        "image": None,
     },
     {
         "id": 7,
-        "name": "Dell 27-inch FHD Monitor",
-        "brand": "Dell",
-        "category": "Monitors",
-        "price": 15999.00,
-        "rating": 4.4,
-        "review_count": 1543,
-        "description": "27-inch Full HD IPS monitor with slim bezels and eye-comfort technology.",
+        "name": "OnePlus Nord CE 3",
+        "brand": "OnePlus",
+        "category": "Smartphone",
+        "price": 19999,
+        "rating": 4.3,
+        "review_count": 21340,
+        "description": "5G smartphone with 108MP camera, 67W fast charging, and AMOLED display.",
         "stock": True,
-        "image": "https://placehold.co/400x400",
+        "image": None,
     },
     {
         "id": 8,
-        "name": "ASUS ROG Strix G16 Gaming Laptop",
-        "brand": "ASUS",
-        "category": "Laptops",
-        "price": 134990.00,
-        "rating": 4.5,
-        "review_count": 674,
-        "description": "Intel Core i9 13th Gen, RTX 4070, 16GB RAM, 1TB SSD gaming laptop.",
+        "name": "Samsung Galaxy M14",
+        "brand": "Samsung",
+        "category": "Smartphone",
+        "price": 12999,
+        "rating": 4.0,
+        "review_count": 18760,
+        "description": "Budget-friendly smartphone with 6000mAh battery and 50MP triple camera setup.",
         "stock": True,
-        "image": "https://placehold.co/400x400",
+        "image": None,
     },
     {
         "id": 9,
-        "name": "iPhone 15 Pro",
+        "name": "Apple iPhone 13",
         "brand": "Apple",
         "category": "Smartphone",
-        "price": 134900.00,
-        "rating": 4.8,
-        "review_count": 5231,
-        "description": "Titanium design with A17 Pro chip, 48MP main camera, and USB-C.",
+        "price": 46999,
+        "rating": 4.6,
+        "review_count": 42150,
+        "description": "A15 Bionic chip, dual-camera system, and Super Retina XDR display in a durable design.",
         "stock": True,
-        "image": "https://placehold.co/400x400",
+        "image": None,
     },
     {
         "id": 10,
-        "name": "Samsung Galaxy S24 Ultra",
-        "brand": "Samsung",
-        "category": "Smartphone",
-        "price": 129999.00,
-        "rating": 4.7,
-        "review_count": 4102,
-        "description": "200MP camera, built-in S Pen, Snapdragon 8 Gen 3, and Galaxy AI features.",
+        "name": "Noise ColorFit Pro 4 Smartwatch",
+        "brand": "Noise",
+        "category": "Smartwatch",
+        "price": 2499,
+        "rating": 3.9,
+        "review_count": 7650,
+        "description": "AMOLED smartwatch with Bluetooth calling and 100+ sports modes.",
         "stock": True,
-        "image": "https://placehold.co/400x400",
+        "image": None,
     },
     {
         "id": 11,
-        "name": "Apple Watch Series 9",
-        "brand": "Apple",
+        "name": "Boat Wave Call Smartwatch",
+        "brand": "Boat",
         "category": "Smartwatch",
-        "price": 41900.00,
-        "rating": 4.6,
-        "review_count": 1893,
-        "description": "Advanced health sensors, Double Tap gesture, and brighter Retina display.",
+        "price": 1699,
+        "rating": 4.0,
+        "review_count": 11230,
+        "description": "Smartwatch with Bluetooth calling, 1.69-inch display, and multiple watch faces.",
         "stock": True,
-        "image": "https://placehold.co/400x400",
+        "image": None,
     },
     {
         "id": 12,
-        "name": "Noise ColorFit Pro 5",
-        "brand": "Noise",
-        "category": "Smartwatch",
-        "price": 3999.00,
+        "name": "Dell Inspiron 15 Laptop",
+        "brand": "Dell",
+        "category": "Laptop",
+        "price": 42990,
+        "rating": 4.2,
+        "review_count": 5430,
+        "description": "15.6-inch laptop with Intel Core i5 processor, 8GB RAM, and 512GB SSD.",
+        "stock": True,
+        "image": None,
+    },
+    {
+        "id": 13,
+        "name": "HP Pavilion 14 Laptop",
+        "brand": "HP",
+        "category": "Laptop",
+        "price": 55990,
+        "rating": 4.3,
+        "review_count": 4120,
+        "description": "Slim and lightweight laptop with Intel Core i5, 16GB RAM, and backlit keyboard.",
+        "stock": True,
+        "image": None,
+    },
+    {
+        "id": 14,
+        "name": "Lenovo IdeaPad Slim 3",
+        "brand": "Lenovo",
+        "category": "Laptop",
+        "price": 38990,
         "rating": 4.1,
-        "review_count": 6789,
-        "description": "1.85-inch AMOLED display, Bluetooth calling, and built-in GPS.",
+        "review_count": 6890,
+        "description": "Everyday laptop with AMD Ryzen 5 processor, 8GB RAM, and 512GB SSD storage.",
         "stock": False,
-        "image": "https://placehold.co/400x400",
+        "image": None,
+    },
+    {
+        "id": 15,
+        "name": "JBL Flip 6 Speaker",
+        "brand": "JBL",
+        "category": "Speaker",
+        "price": 9999,
+        "rating": 4.5,
+        "review_count": 13580,
+        "description": "Portable waterproof Bluetooth speaker with powerful JBL Pro Sound.",
+        "stock": True,
+        "image": None,
+    },
+    {
+        "id": 16,
+        "name": "Zebronics Zeb-County Speaker",
+        "brand": "Zebronics",
+        "category": "Speaker",
+        "price": 999,
+        "rating": 3.7,
+        "review_count": 8210,
+        "description": "Compact wireless speaker with FM radio, USB, and TF card support.",
+        "stock": True,
+        "image": None,
     },
 ]
 
 
+# ---------------------------------------------------------------------------
+# Filtering service
+# ---------------------------------------------------------------------------
+
+def filter_products(
+    brand: Optional[str] = None,
+    category: Optional[str] = None,
+    budget: Optional[int] = None,
+    rating: Optional[float] = None,
+    products: Optional[List[Dict[str, Any]]] = None,
+) -> List[Dict[str, Any]]:
+    """
+    Filter products by brand, category, budget, and minimum rating.
+
+    Args:
+        brand: Brand name to filter by (case-insensitive exact match).
+               If None, brand filtering is skipped.
+        category: Category name to filter by (case-insensitive exact match).
+                  If None, category filtering is skipped.
+        budget: Maximum price allowed (inclusive). Products priced above
+                this value are excluded. If None, budget filtering is
+                skipped.
+        rating: Minimum rating required (inclusive). Products rated below
+                this value are excluded. If None, rating filtering is
+                skipped.
+        products: Optional list of product dicts to filter. Defaults to
+                  the built-in MOCK_PRODUCTS catalog if not provided.
+
+    Returns:
+        A list of product dictionaries matching all provided filters.
+    """
+    source_products = products if products is not None else MOCK_PRODUCTS
+    results: List[Dict[str, Any]] = []
+
+    for product in source_products:
+        if brand and str(product.get("brand", "")).strip().lower() != brand.strip().lower():
+            continue
+
+        if category and str(product.get("category", "")).strip().lower() != category.strip().lower():
+            continue
+
+        if budget is not None:
+            try:
+                if product.get("price") is None or float(product["price"]) > float(budget):
+                    continue
+            except (TypeError, ValueError):
+                continue
+
+        if rating is not None:
+            try:
+                if product.get("rating") is None or float(product["rating"]) < float(rating):
+                    continue
+            except (TypeError, ValueError):
+                continue
+
+        results.append(product)
+
+    return results
+
+
 def get_all_products() -> List[Dict[str, Any]]:
-    """Return all mock products."""
+    """
+    Return the full mock product catalog (no filtering applied).
+
+    Returns:
+        A list of all product dictionaries in the mock catalog.
+    """
     return MOCK_PRODUCTS
 
 
-def get_product_by_id(product_id: int) -> Optional[Dict[str, Any]]:
-    """Return a single product matching the given id, or None if not found."""
+def get_product_by_id(product_id: int):
     for product in MOCK_PRODUCTS:
         if product["id"] == product_id:
             return product
     return None
 
 
-def search_products(query: str) -> List[Dict[str, Any]]:
-    """Return products whose name contains the given query (case-insensitive)."""
-    if not query:
-        return []
+def search_products(query: str):
+    query = query.lower()
 
-    query_lower = query.lower()
-    return [product for product in MOCK_PRODUCTS if query_lower in product["name"].lower()]
-
-
-def recommended_products(limit: int = 4) -> List[Dict[str, Any]]:
-    """Return the top recommended products, ranked by rating and review count."""
-    sorted_products = sorted(
-        MOCK_PRODUCTS,
-        key=lambda product: (product["rating"], product["review_count"]),
-        reverse=True,
-    )
-    return sorted_products[:limit]
+    return [
+        product
+        for product in MOCK_PRODUCTS
+        if query in product["name"].lower()
+        or query in product["brand"].lower()
+        or query in product["category"].lower()
+    ]

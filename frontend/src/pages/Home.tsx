@@ -3,6 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { Sparkles, Search, Loader2 } from "lucide-react";
 import Navbar from "../components/common/Navbar";
 import { search } from "../services/agentService";
+import HowItWorks from "../components/home/HowItWorks";
+import Features from "../components/home/Features";
+import Comparison from "../components/home/Comparison";
+import Categories from "../components/home/Categories";
+import Workflow from "../components/home/Workflow";
+import FutureFeatures from "../components/home/FutureFeatures";
+import CTA from "../components/home/CTA";
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -21,9 +28,11 @@ const Home: React.FC = () => {
     setError(null);
 
     try {
-      await search(query);
-      navigate("/search", { state: { query } });
-    } catch (err) {
+      const response = await search(query.trim());
+      navigate(`/search?q=${encodeURIComponent(query.trim())}`, {
+        state: { query: query.trim(), products: response.matching_products },
+      });
+    } catch {
       setError("Something went wrong while processing your request. Please try again.");
     } finally {
       setLoading(false);
@@ -57,6 +66,7 @@ const Home: React.FC = () => {
         {/* Search Form */}
         <form
           onSubmit={handleSubmit}
+          id="hero-search"
           className="mt-10 flex w-full max-w-2xl flex-col gap-3 sm:flex-row"
         >
           <div className="relative flex-1">
@@ -93,6 +103,14 @@ const Home: React.FC = () => {
           <p className="mt-4 text-sm font-medium text-rose-600">{error}</p>
         )}
       </div>
+
+      <HowItWorks />
+      <Features />
+      <Comparison />
+      <Categories />
+      <Workflow />
+      <FutureFeatures />
+      <CTA />
     </div>
   );
 };

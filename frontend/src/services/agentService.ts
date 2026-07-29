@@ -1,32 +1,28 @@
 import api from "./api";
+import type { Product } from "./productService";
 
 export interface ChatResponse {
   reply: string;
 }
 
-export interface RecommendedProduct {
-  id: number;
-  name: string;
-  brand: string;
-  category: string;
-  price: number;
-  rating: number;
-}
-
 export interface SearchResponse {
-  intent: string;
-  brand: string | null;
-  category: string | null;
-  budget: number | null;
-  products_found: number;
-  recommended_product: RecommendedProduct;
+  query: string;
+  parsed: {
+    intent: string;
+    brand: string | null;
+    category: string | null;
+    budget: number | null;
+  };
+  matching_products: Product[];
+  recommended_product: Product | null;
+  confidence_score: number;
+  reasoning: string;
+  error?: string;
 }
 
 export interface RecommendResponse {
-  top_product: RecommendedProduct;
-  confidence: number;
+  recommended_product: Product | null;
   reason: string;
-  score: number;
 }
 
 export const chat = async (message: string): Promise<ChatResponse> => {

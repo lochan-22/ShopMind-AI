@@ -1,6 +1,19 @@
-import type { Product } from "@/components/product/types";
+interface MockProduct {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  price: number;
+  rating: number;
+  reviewCount: number;
+  imageColor: string;
+  imageLabel: string;
+  compareAtPrice?: number;
+  badge?: string;
+  inStock: boolean;
+}
 
-export const MOCK_PRODUCTS: Product[] = [
+export const MOCK_PRODUCTS: MockProduct[] = [
   {
     id: "prod-1",
     name: "Wireless Earbuds Pro",

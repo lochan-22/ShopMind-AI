@@ -10,7 +10,7 @@ export interface Product {
   review_count: number;
   description: string;
   stock: boolean;
-  image: string;
+  image: string | null;
 }
 
 export const getProducts = async (): Promise<Product[]> => {

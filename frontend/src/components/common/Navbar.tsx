@@ -8,7 +8,11 @@ const Navbar: React.FC = () => {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
 
         {/* Left — Logo */}
-        <div className="flex items-center gap-2.5 select-none">
+        <button
+          type="button"
+          onClick={() => window.location.assign("/")}
+          className="flex items-center gap-2.5 select-none"
+        >
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-900">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path
@@ -21,13 +25,15 @@ const Navbar: React.FC = () => {
           <span className="text-[15px] font-semibold tracking-tight text-gray-900">
             ShopMind AI
           </span>
-        </div>
+        </button>
 
         {/* Center — Nav links */}
         <nav className="hidden md:flex items-center gap-1">
           {["Home", "Products", "Categories"].map((item) => (
             <button
               key={item}
+              type="button"
+              onClick={() => window.location.assign(item === "Home" ? "/" : item === "Products" ? "/products" : "/categories")}
               className="rounded-lg px-4 py-2 text-[14px] font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
             >
               {item}
@@ -40,6 +46,7 @@ const Navbar: React.FC = () => {
           {/* Cart */}
           <button
             aria-label="Cart"
+            onClick={() => window.location.assign("/cart")}
             className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-900"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -79,6 +86,8 @@ const Navbar: React.FC = () => {
           {["Home", "Products", "Categories"].map((item) => (
             <button
               key={item}
+              type="button"
+              onClick={() => window.location.assign(item === "Home" ? "/" : item === "Products" ? "/products" : "/categories")}
               className="rounded-lg px-3 py-2.5 text-left text-[14px] font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition"
             >
               {item}

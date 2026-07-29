@@ -4,6 +4,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 /* ── Lazy page imports ── */
 const Home            = lazy(() => import("../pages/Home"));
 const SearchResults   = lazy(() => import("../pages/SearchResults"));
+const Products        = lazy(() => import("../pages/Products"));
+const Categories      = lazy(() => import("../pages/Categories"));
+const CategoryProducts = lazy(() => import("../pages/CategoryProducts"));
 const ProductDetails  = lazy(() => import("../pages/ProductDetails"));
 const Cart            = lazy(() => import("../pages/Cart"));
 const AgentDashboard  = lazy(() => import("../pages/AgentDashboard"));
@@ -33,8 +36,11 @@ const AppRoutes: React.FC = () => (
     <Suspense fallback={<PageLoader />}>
       <Routes>
         <Route path="/"            element={<Home />} />
+        <Route path="/products"     element={<Products />} />
         <Route path="/search"      element={<SearchResults />} />
-        <Route path="/product/:id" element={<ProductDetails />} />
+        <Route path="/products/:id" element={<ProductDetails />} />
+        <Route path="/categories" element={<Categories />} />
+        <Route path="/categories/:category" element={<CategoryProducts />} />
         <Route path="/cart"        element={<Cart />} />
         <Route path="/agent"       element={<AgentDashboard />} />
         <Route path="*"            element={<NotFound />} />
