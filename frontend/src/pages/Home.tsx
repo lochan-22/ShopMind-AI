@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Sparkles, Search, Loader2 } from "lucide-react";
 import Navbar from "../components/common/Navbar";
 import { search } from "../services/agentService";
+import { useAgent } from "../agent/context/AgentContext";
 import HowItWorks from "../components/home/HowItWorks";
 import Features from "../components/home/Features";
 import Comparison from "../components/home/Comparison";
@@ -13,6 +14,7 @@ import CTA from "../components/home/CTA";
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
+  const { openAgent } = useAgent();
   const [query, setQuery] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,6 +97,14 @@ const Home: React.FC = () => {
                 Search
               </>
             )}
+          </button>
+          <button
+            type="button"
+            onClick={openAgent}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-white px-6 py-3.5 text-sm sm:text-base font-medium text-indigo-600 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-indigo-50"
+          >
+            <Sparkles className="h-4 w-4" />
+            AI
           </button>
         </form>
 

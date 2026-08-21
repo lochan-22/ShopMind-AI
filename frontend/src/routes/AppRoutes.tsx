@@ -1,5 +1,8 @@
 import React, { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AgentProvider } from "../agent/context/AgentProvider";
+import { AgentPanel } from "../agent/components/AgentPanel";
+import { FloatingAgentButton } from "../agent/components/FloatingAgentButton";
 
 /* ── Lazy page imports ── */
 const Home            = lazy(() => import("../pages/Home"));
@@ -33,19 +36,23 @@ const PageLoader: React.FC = () => (
 /* ── Route definitions ── */
 const AppRoutes: React.FC = () => (
   <BrowserRouter>
-    <Suspense fallback={<PageLoader />}>
-      <Routes>
-        <Route path="/"            element={<Home />} />
-        <Route path="/products"     element={<Products />} />
-        <Route path="/search"      element={<SearchResults />} />
-        <Route path="/products/:id" element={<ProductDetails />} />
-        <Route path="/categories" element={<Categories />} />
-        <Route path="/categories/:category" element={<CategoryProducts />} />
-        <Route path="/cart"        element={<Cart />} />
-        <Route path="/agent"       element={<AgentDashboard />} />
-        <Route path="*"            element={<NotFound />} />
-      </Routes>
-    </Suspense>
+    <AgentProvider>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/"            element={<Home />} />
+          <Route path="/products"     element={<Products />} />
+          <Route path="/search"      element={<SearchResults />} />
+          <Route path="/products/:id" element={<ProductDetails />} />
+          <Route path="/categories" element={<Categories />} />
+          <Route path="/categories/:category" element={<CategoryProducts />} />
+          <Route path="/cart"        element={<Cart />} />
+          <Route path="/agent"       element={<AgentDashboard />} />
+          <Route path="*"            element={<NotFound />} />
+        </Routes>
+      </Suspense>
+      <AgentPanel />
+      <FloatingAgentButton />
+    </AgentProvider>
   </BrowserRouter>
 );
 

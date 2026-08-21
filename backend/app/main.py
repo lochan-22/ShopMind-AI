@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.routes.products import router as products_router
 from app.routes.agent import router as agent_router
+from app.routes.health import router as health_router
 
 app = FastAPI(
     title="ShopMind AI Backend",
@@ -21,13 +22,9 @@ app.add_middleware(
 # Include routers AFTER creating app
 app.include_router(products_router, prefix="/api")
 app.include_router(agent_router, prefix="/api")
+app.include_router(health_router)
 
 
 @app.get("/")
 def read_root():
     return {"message": "ShopMind AI Backend Running"}
-
-
-@app.get("/health")
-def health_check():
-    return {"status": "healthy"}
