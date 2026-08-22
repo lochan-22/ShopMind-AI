@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     openrouter_model: str = "openai/gpt-4o-mini"
     openrouter_site_url: str = "http://localhost:5173"
     openrouter_app_name: str = "ShopMind AI"
+    serpapi_api_key: str = ""
 
     @field_validator("debug", mode="before")
     @classmethod

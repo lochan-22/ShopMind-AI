@@ -7,6 +7,7 @@ import { FloatingAgentButton } from "../agent/components/FloatingAgentButton";
 /* ── Lazy page imports ── */
 const Home            = lazy(() => import("../pages/Home"));
 const SearchResults   = lazy(() => import("../pages/SearchResults"));
+const CompareProducts = lazy(() => import("../pages/CompareProducts"));
 const Products        = lazy(() => import("../pages/Products"));
 const Categories      = lazy(() => import("../pages/Categories"));
 const CategoryProducts = lazy(() => import("../pages/CategoryProducts"));
@@ -42,6 +43,8 @@ const AppRoutes: React.FC = () => (
           <Route path="/"            element={<Home />} />
           <Route path="/products"     element={<Products />} />
           <Route path="/search"      element={<SearchResults />} />
+          <Route path="/compare"     element={<CompareProducts />} />
+          <Route path="/products/external/:productId" element={<ProductDetails />} />
           <Route path="/products/:id" element={<ProductDetails />} />
           <Route path="/categories" element={<Categories />} />
           <Route path="/categories/:category" element={<CategoryProducts />} />

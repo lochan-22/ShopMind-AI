@@ -1,8 +1,7 @@
 ﻿import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Search, Loader2 } from "lucide-react";
+import { Sparkles, Search } from "lucide-react";
 import Navbar from "../components/common/Navbar";
-import { search } from "../services/agentService";
 import { useAgent } from "../agent/context/AgentContext";
 import HowItWorks from "../components/home/HowItWorks";
 import Features from "../components/home/Features";
@@ -16,29 +15,14 @@ const Home: React.FC = () => {
   const navigate = useNavigate();
   const { openAgent } = useAgent();
   const [query, setQuery] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!query.trim()) {
       return;
     }
 
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await search(query.trim());
-      navigate(`/search?q=${encodeURIComponent(query.trim())}`, {
-        state: { query: query.trim(), products: response.matching_products },
-      });
-    } catch {
-      setError("Something went wrong while processing your request. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    navigate(`/search?q=${encodeURIComponent(query.trim())}`);
   };
 
   return (
@@ -83,20 +67,13 @@ const Home: React.FC = () => {
           </div>
           <button
             type="submit"
-            disabled={loading || !query.trim()}
+            disabled={!query.trim()}
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-3.5 text-sm sm:text-base font-medium text-white shadow-lg shadow-indigo-300/40 transition-all hover:shadow-xl hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
           >
-            {loading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Searching...
-              </>
-            ) : (
-              <>
-                <Search className="h-4 w-4" />
-                Search
-              </>
-            )}
+            <>
+              <Search className="h-4 w-4" />
+              Search
+            </>
           </button>
           <button
             type="button"
@@ -107,11 +84,6 @@ const Home: React.FC = () => {
             AI
           </button>
         </form>
-
-        {/* Error State */}
-        {error && (
-          <p className="mt-4 text-sm font-medium text-rose-600">{error}</p>
-        )}
       </div>
 
       <HowItWorks />

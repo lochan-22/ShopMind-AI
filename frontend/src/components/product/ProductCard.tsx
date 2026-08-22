@@ -6,9 +6,10 @@ import { Star, CheckCircle2, XCircle } from "lucide-react";
 export interface ProductCardProps {
   product: Product;
   showDescription?: boolean;
+  navigationState?: unknown;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product, showDescription = true }) => {
+export const ProductCard: React.FC<ProductCardProps> = ({ product, showDescription = true, navigationState }) => {
   const navigate = useNavigate();
   const imageUrl = product.image || undefined;
   const imageAlt = product.name ?? "";
@@ -19,17 +20,22 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, showDescripti
   const rating = product.rating ?? 0;
   const reviewCount = product.review_count ?? 0;
   const price = product.price ?? 0;
-  const inStock = product.stock ?? false;
+  const stockIsKnown = product.stock !== null && product.stock !== undefined;
+  const inStock = product.stock === true;
+  const externalProductId = product.product_id;
+  const productPath = externalProductId
+    ? `/products/external/${encodeURIComponent(externalProductId)}`
+    : `/products/${product.id}`;
 
   return (
     <div
       role="link"
       tabIndex={0}
-      onClick={() => navigate(`/products/${product.id}`)}
+      onClick={() => navigate(productPath, { state: navigationState })}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
-          navigate(`/products/${product.id}`);
+          navigate(productPath, { state: navigationState });
         }
       }}
       className="group flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white/80 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-200/60"
@@ -50,17 +56,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, showDescripti
         <span className="absolute left-3 top-3 rounded-lg bg-white/90 px-2 py-1 text-[11px] font-medium text-slate-600 shadow-sm">
           {category}
         </span>
-        {inStock ? (
+        {stockIsKnown && inStock ? (
           <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-600 shadow-sm">
             <CheckCircle2 className="h-3 w-3" />
             In Stock
           </span>
-        ) : (
+        ) : stockIsKnown ? (
           <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-lg bg-rose-50 px-2 py-1 text-[11px] font-medium text-rose-600 shadow-sm">
             <XCircle className="h-3 w-3" />
             Out of Stock
           </span>
-        )}
+        ) : null}
       </div>
 
       {/* Content */}

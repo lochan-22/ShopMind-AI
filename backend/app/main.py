@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from urllib.parse import parse_qsl, urlencode
 
 from app.routes.products import router as products_router
 from app.routes.agent import router as agent_router
@@ -10,6 +11,33 @@ app = FastAPI(
     description="Backend API for ShopMind AI - an AI-powered shopping assistant.",
     version="1.0.0",
 )
+
+
+class SensitiveQueryParameterRedactionMiddleware:
+    """Remove sensitive query values before application and access logging."""
+
+    _SENSITIVE_PARAMETERS = {"details_token"}
+
+    def __init__(self, app: FastAPI) -> None:
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        """Redact configured query values while preserving normal request logging."""
+        if scope["type"] == "http" and scope.get("query_string"):
+            query_items = parse_qsl(
+                scope["query_string"].decode("latin-1"), keep_blank_values=True
+            )
+            if any(key.lower() in self._SENSITIVE_PARAMETERS for key, _ in query_items):
+                scope["query_string"] = urlencode(
+                    [
+                        (key, "[REDACTED]" if key.lower() in self._SENSITIVE_PARAMETERS else value)
+                        for key, value in query_items
+                    ]
+                ).encode("latin-1")
+        await self.app(scope, receive, send)
+
+
+app.add_middleware(SensitiveQueryParameterRedactionMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
