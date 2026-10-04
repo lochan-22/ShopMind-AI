@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import threading
 from collections.abc import Mapping
 from typing import Any
 
@@ -20,13 +21,18 @@ class SerpApiProvider(BaseProductProvider):
     """Fetch Google Shopping results through the official SerpApi Python SDK."""
 
     provider_name = "SerpApi Google Shopping"
-    _DEFAULT_MAX_SEARCH_ATTEMPTS = 3
-    _DEFAULT_RETRY_BASE_DELAY_SECONDS = 0.5
+    # The SDK uses ``requests``. A tuple gives it independent bounds for DNS/
+    # TCP connection setup and for waiting for a response from SerpApi.
+    _DEFAULT_CONNECT_TIMEOUT_SECONDS = 2.0
+    _DEFAULT_READ_TIMEOUT_SECONDS = 6.0
+    _DEFAULT_MAX_SEARCH_ATTEMPTS = 2
+    _DEFAULT_RETRY_BASE_DELAY_SECONDS = 0.25
 
     def __init__(
         self,
         api_key: str | None = None,
-        timeout_seconds: float = 10.0,
+        timeout_seconds: float = _DEFAULT_READ_TIMEOUT_SECONDS,
+        connect_timeout_seconds: float = _DEFAULT_CONNECT_TIMEOUT_SECONDS,
         max_search_attempts: int = _DEFAULT_MAX_SEARCH_ATTEMPTS,
         retry_base_delay_seconds: float = _DEFAULT_RETRY_BASE_DELAY_SECONDS,
     ) -> None:
@@ -36,15 +42,20 @@ class SerpApiProvider(BaseProductProvider):
         read from the existing environment-backed application settings.
         """
         self._api_key = api_key if api_key is not None else settings.serpapi_api_key
-        self._timeout_seconds = timeout_seconds
+        self._timeout_seconds = max(0.1, timeout_seconds)
+        self._connect_timeout_seconds = max(0.1, connect_timeout_seconds)
         self._max_search_attempts = max(1, max_search_attempts)
         self._retry_base_delay_seconds = max(0.0, retry_base_delay_seconds)
+        # requests.Session reuses keep-alive connections but is not documented
+        # as thread-safe. One session per asyncio worker thread provides reuse
+        # without sharing mutable session state across concurrent searches.
+        self._thread_local = threading.local()
 
     async def search(self, query: str) -> list[dict[str, Any]]:
         """Search Google Shopping and return provider-neutral raw records.
 
         The official SerpApi client is synchronous, so it is run in a worker
-        thread. Both the SDK timeout and the coroutine timeout are bounded.
+        thread. Its explicit connect/read timeout bounds the HTTP call.
         """
         if not self._api_key:
             logger.warning("SerpApi provider is not configured with an API key")
@@ -72,10 +83,7 @@ class SerpApiProvider(BaseProductProvider):
         """Retry only transient Google Shopping transport failures."""
         for attempt in range(1, self._max_search_attempts + 1):
             try:
-                return await asyncio.wait_for(
-                    asyncio.to_thread(self._request_shopping_results, query),
-                    timeout=self._timeout_seconds + 2,
-                )
+                return await asyncio.to_thread(self._request_shopping_results, query)
             except Exception as error:
                 if not self._is_transient_error(error):
                     # Do not log third-party error text: it can include request
@@ -88,9 +96,12 @@ class SerpApiProvider(BaseProductProvider):
 
                 if attempt == self._max_search_attempts:
                     logger.error(
-                        "SerpApi Google Shopping request failed after %d attempts (%s)",
+                        "SerpApi Google Shopping request failed after %d attempts "
+                        "(error=%s, connect_timeout=%.1fs, read_timeout=%.1fs)",
                         attempt,
                         type(error).__name__,
+                        self._connect_timeout_seconds,
+                        self._timeout_seconds,
                     )
                     raise ProductProviderError(self.provider_name) from None
 
@@ -128,13 +139,16 @@ class SerpApiProvider(BaseProductProvider):
             raise ProductProviderError(self.provider_name)
 
         try:
-            response = await asyncio.wait_for(
-                asyncio.to_thread(self._request_immersive_product, details_token),
-                timeout=self._timeout_seconds + 2,
+            response = await asyncio.to_thread(
+                self._request_immersive_product, details_token
             )
         except Exception as error:
             logger.error(
-                "SerpApi immersive product request failed (%s)", type(error).__name__
+                "SerpApi immersive product request failed "
+                "(error=%s, connect_timeout=%.1fs, read_timeout=%.1fs)",
+                type(error).__name__,
+                self._connect_timeout_seconds,
+                self._timeout_seconds,
             )
             raise ProductProviderError(self.provider_name) from None
 
@@ -157,7 +171,7 @@ class SerpApiProvider(BaseProductProvider):
             logger.error("The SerpApi Python SDK is not installed")
             raise ProductProviderError(self.provider_name) from None
 
-        client = serpapi.Client(api_key=self._api_key, timeout=self._timeout_seconds)
+        client = self._get_client(serpapi)
         response = client.search(
             {
                 "engine": "google_shopping",
@@ -177,7 +191,7 @@ class SerpApiProvider(BaseProductProvider):
             logger.error("The SerpApi Python SDK is not installed")
             raise ProductProviderError(self.provider_name) from None
 
-        client = serpapi.Client(api_key=self._api_key, timeout=self._timeout_seconds)
+        client = self._get_client(serpapi)
         response = client.search(
             {
                 "engine": "google_immersive_product",
@@ -186,6 +200,23 @@ class SerpApiProvider(BaseProductProvider):
             }
         )
         return dict(response)
+
+    def _get_client(self, serpapi_module: Any) -> Any:
+        """Return this worker thread's reusable SDK client.
+
+        Passing a timeout tuple to requests distinguishes a slow connection
+        from a slow SerpApi response. Avoid an outer ``wait_for`` here: it
+        cannot stop a synchronous request already running in ``to_thread`` and
+        would allow a retry to duplicate that in-flight request.
+        """
+        client = getattr(self._thread_local, "client", None)
+        if client is None:
+            client = serpapi_module.Client(
+                api_key=self._api_key,
+                timeout=(self._connect_timeout_seconds, self._timeout_seconds),
+            )
+            self._thread_local.client = client
+        return client
 
     @staticmethod
     def _to_provider_record(result: Mapping[str, Any]) -> dict[str, Any] | None:

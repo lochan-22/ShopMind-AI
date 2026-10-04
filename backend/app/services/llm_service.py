@@ -87,9 +87,14 @@ def _find_first_match(text_lower: str, keyword_map: Dict[str, List[str]]) -> Opt
 
     for label, keywords in keyword_map.items():
         for kw in keywords:
-            pos = text_lower.find(kw.lower())
-            if pos != -1 and pos < best_pos:
-                best_pos = pos
+            # Keywords must be complete words/phrases. A substring search
+            # incorrectly classifies "tell ... headphones" as a greeting
+            # because it contains the characters in "hello".
+            match = re.search(
+                r"(?<!\w)" + re.escape(kw.lower()) + r"(?!\w)", text_lower
+            )
+            if match is not None and match.start() < best_pos:
+                best_pos = match.start()
                 best_label = label
 
     return best_label

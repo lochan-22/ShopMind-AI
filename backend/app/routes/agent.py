@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from app.ai.chat_service import chat_service
 from app.schemas.agent import ChatStreamRequest
 from app.services.agent_service import chat, search, recommend
+from app.routes.products import search_service
 
 router = APIRouter(prefix="/agent", tags=["Agent"])
 
@@ -17,20 +18,18 @@ class SearchRequest(BaseModel):
 
 
 @router.post("/chat")
-def agent_chat(payload: ChatRequest):
+async def agent_chat(payload: ChatRequest):
+    """Keep legacy chat callers live-search grounded when applicable."""
+    product_response = await chat_service.product_reply(payload.message, search_service)
+    if product_response is not None:
+        return {**product_response, "reply": product_response["message"]}
     return chat(payload.message)
 
 
 @router.post("/chat/stream")
 async def agent_chat_stream(payload: ChatStreamRequest):
-    if not chat_service.is_configured():
-        raise HTTPException(
-            status_code=503,
-            detail="AI chat is not configured. Set OPENROUTER_API_KEY in backend/.env.",
-        )
-
     return StreamingResponse(
-        chat_service.stream_reply(payload.message, payload.history),
+        chat_service.stream_reply(payload.message, payload.history, search_service),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )

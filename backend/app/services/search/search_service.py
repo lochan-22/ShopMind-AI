@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from dataclasses import dataclass
 from time import monotonic
 
@@ -15,6 +16,8 @@ from app.services.search.providers.base_provider import (
     ProductDetailsProvider,
     ProductProviderError,
 )
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(slots=True)
@@ -109,9 +112,19 @@ class SearchService:
         if cached_product.details_token:
             for provider in self._providers:
                 if isinstance(provider, ProductDetailsProvider):
-                    raw_product = await provider.get_product_details(
-                        product_id, cached_product.details_token
-                    )
+                    try:
+                        raw_product = await provider.get_product_details(
+                            product_id, cached_product.details_token
+                        )
+                    except ProductProviderError:
+                        # Immersive details enrich a real Shopping hit; they
+                        # must not make that already-returned hit unusable.
+                        logger.warning(
+                            "Optional external product details unavailable; "
+                            "using cached search result (provider=%s)",
+                            getattr(provider, "provider_name", type(provider).__name__),
+                        )
+                        break
                     return self._normalizer.normalize(raw_product)
 
         # A source result without an immersive token is still a real, normalized

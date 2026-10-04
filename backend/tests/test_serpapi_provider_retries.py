@@ -12,7 +12,7 @@ from app.services.search.providers.serpapi_provider import SerpApiProvider
 
 
 class TimeoutThenSuccessProvider(SerpApiProvider):
-    """Test provider that succeeds after two transient transport failures."""
+    """Test provider that succeeds after one transient transport failure."""
 
     def __init__(self) -> None:
         super().__init__(api_key="test-key", retry_base_delay_seconds=0)
@@ -20,7 +20,7 @@ class TimeoutThenSuccessProvider(SerpApiProvider):
 
     def _request_shopping_results(self, query: str) -> dict[str, Any]:
         self.calls += 1
-        if self.calls < 3:
+        if self.calls < 2:
             raise TimeoutError
         return {"shopping_results": [{"title": "Recovered product", "product_id": "1"}]}
 
@@ -43,7 +43,7 @@ def test_transient_search_timeouts_are_retried_before_success() -> None:
 
     products = asyncio.run(provider.search("sony headphones"))
 
-    assert provider.calls == 3
+    assert provider.calls == 2
     assert products[0]["name"] == "Recovered product"
 
 
