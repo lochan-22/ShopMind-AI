@@ -1,73 +1,120 @@
 import React from "react";
-import {
-  Headphones,
-  Smartphone,
-  Laptop,
-  Watch,
-  Tablet,
-  Camera,
-  Gamepad2,
-  Cable,
-  type LucideIcon,
-} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
 import { useInView } from "./useInView";
+import { MAIN_CATEGORIES } from "../../data/categoryData";
 
-interface Category {
-  icon: LucideIcon;
-  label: string;
-}
-
-const categories: Category[] = [
-  { icon: Headphones, label: "Headphones" },
-  { icon: Smartphone, label: "Smartphones" },
-  { icon: Laptop, label: "Laptops" },
-  { icon: Watch, label: "Smart Watches" },
-  { icon: Tablet, label: "Tablets" },
-  { icon: Camera, label: "Cameras" },
-  { icon: Gamepad2, label: "Gaming" },
-  { icon: Cable, label: "Accessories" },
+/* Per-category accent colors */
+const CATEGORY_ACCENTS: Array<{ bg: string; border: string; text: string; glow: string }> = [
+  { bg: "linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%)", border: "#C4B5FD", text: "#6D28D9", glow: "rgba(124, 58, 237, 0.15)" },
+  { bg: "linear-gradient(135deg, #FFF7ED 0%, #FED7AA 100%)", border: "#FDBA74", text: "#C2410C", glow: "rgba(234, 88, 12, 0.15)" },
+  { bg: "linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)", border: "#FCD34D", text: "#D97706", glow: "rgba(217, 119, 6, 0.15)" },
+  { bg: "linear-gradient(135deg, #EFF6FF 0%, #BFDBFE 100%)", border: "#93C5FD", text: "#1D4ED8", glow: "rgba(29, 78, 216, 0.15)" },
+  { bg: "linear-gradient(135deg, #FDF2F8 0%, #FBCFE8 100%)", border: "#F472B6", text: "#BE185D", glow: "rgba(190, 24, 93, 0.15)" },
+  { bg: "linear-gradient(135deg, #F0FDF4 0%, #BBF7D0 100%)", border: "#86EFAC", text: "#15803D", glow: "rgba(21, 128, 61, 0.15)" },
+  { bg: "linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%)", border: "#FED7AA", text: "#C2410C", glow: "rgba(194, 65, 12, 0.15)" },
+  { bg: "linear-gradient(135deg, #FEF2F2 0%, #FECACA 100%)", border: "#FCA5A5", text: "#B91C1C", glow: "rgba(185, 28, 28, 0.15)" },
+  { bg: "linear-gradient(135deg, #FFFBEB 0%, #FDE68A 100%)", border: "#FCD34D", text: "#B45309", glow: "rgba(180, 83, 9, 0.15)" },
+  { bg: "linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)", border: "#BBF7D0", text: "#15803D", glow: "rgba(21, 128, 61, 0.15)" },
+  { bg: "linear-gradient(135deg, #F5F3FF 0%, #DDD6FE 100%)", border: "#C4B5FD", text: "#6D28D9", glow: "rgba(109, 40, 217, 0.15)" },
 ];
 
 const Categories: React.FC = () => {
   const { ref, inView } = useInView<HTMLDivElement>();
+  const navigate = useNavigate();
 
   return (
-    <section className="w-full bg-gradient-to-b from-white via-indigo-50/40 to-white py-20">
-      <div ref={ref} className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section className="relative w-full py-20 overflow-hidden">
+      {/* ── Background Atmosphere & Technical Arcs ── */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-20 select-none"
+        style={{
+          backgroundImage: "radial-gradient(circle, rgba(124, 58, 237, 0.12) 1.2px, transparent 1.2px)",
+          backgroundSize: "28px 28px",
+        }}
+        aria-hidden="true"
+      />
+
+      <div
+        className="pointer-events-none absolute -left-20 top-1/2 -translate-y-1/2 h-64 w-64 rounded-full opacity-20 blur-3xl select-none"
+        style={{ background: "radial-gradient(circle, #FED7AA 0%, #FB923C 50%, transparent 70%)" }}
+        aria-hidden="true"
+      />
+
+      <div
+        className="pointer-events-none absolute -right-20 top-1/2 -translate-y-1/2 h-64 w-64 rounded-full opacity-20 blur-3xl select-none"
+        style={{ background: "radial-gradient(circle, #DDD6FE 0%, #A855F7 50%, transparent 70%)" }}
+        aria-hidden="true"
+      />
+
+      <div ref={ref} className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* Section Header */}
         <div
           className={`mx-auto max-w-2xl text-center transition-all duration-700 ease-out ${
             inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
           }`}
         >
-          <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-slate-900">
-            Supported Categories
+          <span
+            className="text-xs font-bold uppercase tracking-widest text-[#7C3AED]"
+          >
+            Browse All Departments
+          </span>
+          <h2
+            className="mt-2 text-2xl sm:text-4xl font-extrabold tracking-tight text-[#0D0B1E]"
+          >
+            Shop Across Categories
           </h2>
-          <p className="mt-3 text-sm sm:text-base leading-relaxed text-slate-500">
-            ShopMind AI already knows its way around these categories.
+          <p className="mt-2 text-xs sm:text-sm leading-relaxed text-[#7A7068]">
+            Explore 11 live shopping departments and hundreds of subcategories.
           </p>
         </div>
 
-        <div className="mt-14 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {categories.map((category, index) => {
-            const Icon = category.icon;
+        {/* 11 Department Cards Grid */}
+        <div className="mt-14 grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-11">
+          {MAIN_CATEGORIES.map((category, index) => {
+            const accent = CATEGORY_ACCENTS[index % CATEGORY_ACCENTS.length];
             return (
-              <div
-                key={category.label}
-                style={{ transitionDelay: inView ? `${index * 60}ms` : "0ms" }}
-                className={`group flex flex-col items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white/80 px-4 py-8 text-center shadow-sm transition-all duration-700 ease-out hover:-translate-y-1 hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-200/50 ${
-                  inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+              <button
+                key={category.slug}
+                type="button"
+                onClick={() => navigate(`/categories/${category.slug}`)}
+                style={{
+                  transitionDelay: inView ? `${index * 25}ms` : "0ms",
+                  boxShadow: "0 2px 10px rgba(13, 11, 30, 0.04)",
+                }}
+                className={`group relative flex flex-col items-center justify-center gap-2.5 rounded-2xl border border-[#E8E2D9] bg-white/95 px-3 py-5 text-center backdrop-blur-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-purple-300 hover:shadow-xl ${
+                  inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
                 }`}
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-50 to-purple-50 transition-colors duration-300 group-hover:from-indigo-500 group-hover:to-purple-600">
-                  <Icon
-                    className="h-5 w-5 text-indigo-500 transition-colors duration-300 group-hover:text-white"
-                    strokeWidth={1.75}
-                  />
+                {/* Emoji Icon Container */}
+                <div
+                  className="flex h-12 w-12 items-center justify-center rounded-xl text-2xl shadow-sm transition-transform duration-300 group-hover:scale-110"
+                  style={{
+                    background: accent.bg,
+                    boxShadow: `0 4px 12px ${accent.glow}`,
+                  }}
+                >
+                  <span>{category.emoji}</span>
                 </div>
-                <span className="text-xs font-medium text-slate-700 sm:text-sm">
-                  {category.label}
-                </span>
-              </div>
+
+                {/* Title & Count */}
+                <div className="flex flex-col items-center">
+                  <span
+                    className="text-xs font-bold leading-tight text-[#0D0B1E] line-clamp-1 group-hover:text-[#7C3AED] transition-colors"
+                  >
+                    {category.label}
+                  </span>
+                  <span className="mt-0.5 text-[10px] text-[#A89F95]">
+                    {category.subcategories.length} subcategories
+                  </span>
+                </div>
+
+                {/* Hover indicator arrow */}
+                <ArrowRight
+                  className="h-3 w-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200"
+                  style={{ color: accent.text }}
+                />
+              </button>
             );
           })}
         </div>

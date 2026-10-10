@@ -35,6 +35,11 @@ export const AgentProvider = ({ children }: { children: ReactNode }) => {
             ? { ...item, content: item.content + event.content }
             : item));
         }
+        if (event.type === "products") {
+          setMessages((current) => current.map((item) => item.id === assistantMessage.id
+            ? { ...item, products: event.products }
+            : item));
+        }
         if (event.type === "error") {
           receivedResponse = true;
           setMessages((current) => current.map((item) => item.id === assistantMessage.id

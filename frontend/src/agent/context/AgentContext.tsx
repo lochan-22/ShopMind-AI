@@ -1,4 +1,5 @@
 import { createContext, useContext } from "react";
+import type { Product } from "../../services/productService";
 
 export type AgentRole = "user" | "agent";
 
@@ -6,6 +7,7 @@ export interface AgentMessageData {
   id: string;
   role: AgentRole;
   content: string;
+  products?: Product[];
 }
 
 export interface AgentContextValue {

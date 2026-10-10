@@ -29,7 +29,7 @@ export const ProductSearchForm: React.FC<ProductSearchFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="flex w-full flex-col gap-3 sm:flex-row">
       <div className="relative flex-1">
-        <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+        <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2" style={{ color: "#A89F95" }} />
         <input
           type="search"
           value={query}
@@ -37,13 +37,30 @@ export const ProductSearchForm: React.FC<ProductSearchFormProps> = ({
           placeholder="Search for products..."
           autoComplete="off"
           enterKeyHint="search"
-          className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-sm text-slate-800 shadow-sm outline-none transition-colors placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+          className="w-full rounded-xl border bg-white py-3 pl-11 pr-4 text-sm font-medium outline-none transition-all placeholder:text-[#A89F95]"
+          style={{
+            borderColor: "#E8E2D9",
+            color: "#0D0B1E",
+            boxShadow: "inset 0 1px 2px rgba(13, 11, 30, 0.03)",
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = "#7C3AED";
+            e.currentTarget.style.boxShadow = "0 0 0 3px rgba(124, 58, 237, 0.15)";
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = "#E8E2D9";
+            e.currentTarget.style.boxShadow = "inset 0 1px 2px rgba(13, 11, 30, 0.03)";
+          }}
         />
       </div>
       <button
         type="submit"
         disabled={!query.trim()}
-        className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-3 text-sm font-medium text-white shadow-md shadow-indigo-300/30 transition-all hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+        className="inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-50"
+        style={{
+          background: "linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%)",
+          boxShadow: "0 3px 10px rgba(124, 58, 237, 0.30)",
+        }}
       >
         <Search className="h-4 w-4" />
         Search

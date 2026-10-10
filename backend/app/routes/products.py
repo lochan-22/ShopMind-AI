@@ -8,6 +8,7 @@ from app.services.product_service import (
     get_all_products,
     get_product_by_id,
 )
+from app.services.decision_engine import decision_engine
 from app.services.search import NormalizedProduct, SearchService
 from app.services.search.providers.base_provider import ProductProviderError
 from app.services.search.providers.serpapi_provider import SerpApiProvider
@@ -78,16 +79,60 @@ def _serialize_search_product(product: NormalizedProduct) -> dict[str, object]:
                 "source_name": offer.source_name,
                 "product_url": offer.product_url,
                 "is_best_price": offer.is_best_price,
+                "condition": offer.condition,
+                "merchant_normalized": offer.merchant_normalized,
             }
             for offer in product.offers
         ],
     }
 
 
-@router.get("/search")
-async def search_products_route(q: Optional[str] = Query(None, min_length=1)):
+@router.get("/decision")
+async def product_decision_route(q: Optional[str] = Query(None, min_length=1)):
+    """Execute end-to-end shopping decision engine: intent extraction, live SerpApi search,
+    budget verification, AI analysis, and top-5 recommendations alongside all live products."""
     if not q:
         raise HTTPException(status_code=400, detail="Query parameter 'q' is required.")
+
+    try:
+        return await decision_engine.execute(q, search_service)
+    except ProductProviderError:
+        logger.error("A configured product search provider is unavailable")
+        raise HTTPException(
+            status_code=503,
+            detail="Live product search is temporarily unavailable. Please try again later.",
+        ) from None
+    except Exception as error:
+        logger.error("Product decision failed (%s)", type(error).__name__)
+        raise HTTPException(
+            status_code=500,
+            detail="Product decision engine is temporarily unavailable. Please try again later.",
+        ) from None
+
+
+@router.get("/search")
+async def search_products_route(
+    q: Optional[str] = Query(None, min_length=1),
+    decision: bool = Query(False),
+):
+    if not q:
+        raise HTTPException(status_code=400, detail="Query parameter 'q' is required.")
+
+    if decision:
+        try:
+            return await decision_engine.execute(q, search_service)
+        except ProductProviderError:
+            logger.error("A configured product search provider is unavailable")
+            raise HTTPException(
+                status_code=503,
+                detail="Live product search is temporarily unavailable. Please try again later.",
+            ) from None
+        except Exception as error:
+            logger.error("Product decision failed (%s)", type(error).__name__)
+            raise HTTPException(
+                status_code=500,
+                detail="Product decision engine is temporarily unavailable. Please try again later.",
+            ) from None
 
     try:
         products = await search_service.search(q)

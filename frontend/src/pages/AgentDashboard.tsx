@@ -1,158 +1,175 @@
 import React from "react";
-import type { Product } from "../services/productService";
-import Navbar from "../components/common/Navbar";
-import { ProductCard } from "../components/product/ProductCard";
 import {
   Mic,
-  CheckCircle2,
   Brain,
+  CheckCircle2,
   Sparkles,
-  Target,
-  Clock,
-  Gauge,
-  Search,
-  ScanSearch,
+  Zap,
+  Tag,
   ShieldCheck,
+  Target,
   Bell,
-  Mic2,
-  TrendingDown,
-  PackageCheck,
-  Store,
-  Ticket,
-  Truck,
+  Cpu,
+  BarChart3,
+  ShoppingCart,
+  GitCompare,
 } from "lucide-react";
+import Navbar from "../components/common/Navbar";
+import PageBackground from "../components/common/PageBackground";
+import { ProductCard } from "../components/product/ProductCard";
+import type { Product } from "../services/productService";
+import ShopMindText from "../components/common/ShopMindText";
+
+const timelineSteps = [
+  "Voice input received: 'I need Sony wireless headphones under ₹5000'",
+  "AI parsed intent: Brand = Sony, Category = Headphones, Budget = ₹5000",
+  "Product catalog search executed: 12 matching products found",
+  "Filtering applied: Excluded over-budget & unrated items",
+  "AI reasoning completed: Selected Sony WH-1000XM5 as top recommendation",
+];
+
+const thinkingLines = [
+  "Executing intent parsing pipeline...",
+  "Query: brand='Sony' AND category='Headphones' AND price <= 5000",
+  "Found 12 candidate products in database",
+  "Filtering out of stock items...",
+  "Calculating AI recommendation score...",
+  "Top match: Sony WH-1000XM5 (Score: 96%)",
+  "Generating natural language explanation...",
+  "Task completed successfully in 1.8s",
+];
 
 const recommendedProduct: Product = {
-  id: 1001,
-  name: "WH-1000XM5 Wireless Noise Cancelling Headphones",
+  id: 1,
+  product_id: "demo-wh1000xm5",
+  name: "Sony WH-1000XM5 Wireless Noise Cancelling Headphones",
   brand: "Sony",
   category: "Headphones",
   price: 4499,
   rating: 4.7,
   review_count: 3245,
-  image: null,
-  description: "Premium wireless noise-cancelling headphones.",
+  image: "https://placehold.co/400x400",
+  description:
+    "Industry-leading noise cancellation with premium sound quality, 30-hour battery life, and crystal-clear hands-free calling.",
   stock: true,
+  offers: [
+    {
+      price: 4499,
+      currency: "INR",
+      stock_status: "in_stock",
+      source_name: "boAt",
+      product_url: "https://www.google.com",
+      is_best_price: true,
+    },
+  ],
 };
 
-const timelineSteps: string[] = [
-  "Voice converted to text",
-  "Intent detected",
-  "Product category identified",
-  "Budget extracted",
-  "Brand detected",
-  "Search started",
-  "Products ranked",
-  "Best recommendation selected",
-  "Cart updated",
+const agentStats = [
+  { label: "Search Accuracy", value: "98.4%", icon: <Target className="h-5 w-5" style={{ color: "#7C3AED" }} /> },
+  { label: "Tasks Completed", value: "1,248", icon: <CheckCircle2 className="h-5 w-5 text-emerald-600" /> },
+  { label: "Avg Response Time", value: "1.4s", icon: <Zap className="h-5 w-5 text-orange-500" /> },
+  { label: "Price Savings", value: "18%", icon: <Tag className="h-5 w-5 text-purple-600" /> },
+  { label: "User Satisfaction", value: "4.9/5", icon: <ShieldCheck className="h-5 w-5 text-blue-600" /> },
 ];
 
-const thinkingLines: string[] = [
-  "Understanding user request...",
-  "Searching products...",
-  "Comparing specifications...",
-  "Checking prices...",
-  "Ranking products...",
-  "Selecting best value...",
-  "Ready to add to cart...",
-];
-
-const agentStats: { label: string; value: string; icon: React.ReactNode }[] = [
-  {
-    label: "Products Analysed",
-    value: "248",
-    icon: <ScanSearch className="h-5 w-5 text-indigo-500" />,
-  },
-  {
-    label: "Products Compared",
-    value: "36",
-    icon: <Search className="h-5 w-5 text-indigo-500" />,
-  },
-  {
-    label: "Decision Accuracy",
-    value: "97%",
-    icon: <ShieldCheck className="h-5 w-5 text-indigo-500" />,
-  },
-  {
-    label: "Avg Processing Time",
-    value: "1.8s",
-    icon: <Clock className="h-5 w-5 text-indigo-500" />,
-  },
-  {
-    label: "Confidence Score",
-    value: "94%",
-    icon: <Gauge className="h-5 w-5 text-indigo-500" />,
-  },
-];
-
-const roadmapFeatures: { label: string; icon: React.ReactNode }[] = [
-  { label: "Voice Shopping", icon: <Mic2 className="h-5 w-5 text-violet-500" /> },
-  { label: "Price Prediction", icon: <TrendingDown className="h-5 w-5 text-violet-500" /> },
-  { label: "Order Automation", icon: <PackageCheck className="h-5 w-5 text-violet-500" /> },
-  { label: "Multi-store Comparison", icon: <Store className="h-5 w-5 text-violet-500" /> },
-  { label: "Coupon Finder", icon: <Ticket className="h-5 w-5 text-violet-500" /> },
-  { label: "Delivery Prediction", icon: <Truck className="h-5 w-5 text-violet-500" /> },
+const roadmapFeatures = [
+  { label: "Voice Search AI", icon: <Mic className="h-5 w-5 text-purple-600" /> },
+  { label: "Price Drop Alerts", icon: <Bell className="h-5 w-5 text-purple-600" /> },
+  { label: "Multi-Store Compare", icon: <GitCompare className="h-5 w-5 text-purple-600" /> },
+  { label: "Smart Recommendations", icon: <Brain className="h-5 w-5 text-purple-600" /> },
+  { label: "Autonomous Checkout", icon: <ShoppingCart className="h-5 w-5 text-purple-600" /> },
+  { label: "Real-Time Tracking", icon: <BarChart3 className="h-5 w-5 text-purple-600" /> },
 ];
 
 const AgentDashboard: React.FC = () => {
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-slate-50 via-white to-violet-50">
+    <PageBackground>
       <Navbar />
 
-      <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Page Header */}
+      <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        {/* Header */}
         <div className="mb-10 text-center sm:text-left">
-          <div className="flex items-center justify-center gap-3 sm:justify-start">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-tr from-violet-500 to-fuchsia-600 shadow-md shadow-violet-300/50">
-              <Brain className="h-5 w-5 text-white" strokeWidth={2} />
+          <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center">
+            <div
+              className="flex h-12 w-12 items-center justify-center rounded-2xl shadow-lg"
+              style={{
+                background: "linear-gradient(135deg, #7C3AED 0%, #A855F7 100%)",
+                boxShadow: "0 4px 14px rgba(124, 58, 237, 0.35)",
+              }}
+            >
+              <Cpu className="h-6 w-6 text-white" strokeWidth={2} />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight" style={{ color: "#0D0B1E" }}>
               AI Shopping Agent Dashboard
             </h1>
           </div>
-          <p className="mx-auto mt-3 max-w-2xl text-sm sm:text-base leading-relaxed text-slate-500 sm:mx-0">
-            Watch ShopMind AI understand your request, search products, compare
-            options, reason about decisions, and complete shopping tasks
-            automatically.
+          <p className="mx-auto mt-3 max-w-2xl text-sm sm:text-base leading-relaxed sm:mx-0" style={{ color: "#7A7068" }}>
+            Watch <ShopMindText /> understand your request, search live products, compare
+            offers, reason about decisions, and streamline your shopping tasks.
           </p>
         </div>
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           <div className="space-y-8 lg:col-span-2">
             {/* Voice Command Card */}
-            <div className="rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-lg shadow-slate-200/50 sm:p-8">
+            <div
+              className="rounded-3xl border p-6 sm:p-8"
+              style={{
+                background: "linear-gradient(135deg, #FFFFFF, #FDFAF7)",
+                borderColor: "#E8E2D9",
+                boxShadow: "0 4px 16px rgba(13, 11, 30, 0.05)",
+              }}
+            >
               <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center">
-                <div className="relative flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-violet-500 to-fuchsia-600 shadow-md shadow-violet-300/50">
+                <div
+                  className="relative flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl shadow-md"
+                  style={{
+                    background: "linear-gradient(135deg, #7C3AED, #A855F7)",
+                    boxShadow: "0 4px 14px rgba(124, 58, 237, 0.35)",
+                  }}
+                >
                   <Mic className="h-6 w-6 text-white" strokeWidth={2} />
-                  <span className="absolute -inset-1 -z-10 animate-ping rounded-2xl bg-violet-400/30" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs font-medium uppercase tracking-wide text-violet-500">
-                    Voice Command
+                  <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "#7C3AED" }}>
+                    Voice Command Simulation
                   </p>
-                  <p className="mt-1 text-base sm:text-lg font-semibold text-slate-900">
-                    "I need Sony wireless headphones under ₹5000"
+                  <p className="mt-1 text-base sm:text-lg font-bold" style={{ color: "#0D0B1E" }}>
+                    &ldquo;I need Sony wireless headphones under ₹5000&rdquo;
                   </p>
                 </div>
-                <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-600">
+                <span
+                  className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold"
+                  style={{ background: "#F0FDF4", color: "#16A34A" }}
+                >
                   <CheckCircle2 className="h-4 w-4" />
-                  Voice Received
+                  Processed
                 </span>
               </div>
             </div>
 
             {/* AI Reasoning Timeline */}
-            <div className="rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-lg shadow-slate-200/50 sm:p-8">
-              <h2 className="mb-6 text-lg sm:text-xl font-bold text-slate-900">
+            <div
+              className="rounded-3xl border p-6 sm:p-8"
+              style={{
+                background: "linear-gradient(135deg, #FFFFFF, #FDFAF7)",
+                borderColor: "#E8E2D9",
+                boxShadow: "0 4px 16px rgba(13, 11, 30, 0.05)",
+              }}
+            >
+              <h2 className="mb-6 text-lg sm:text-xl font-bold" style={{ color: "#0D0B1E" }}>
                 AI Reasoning Timeline
               </h2>
-              <ol className="relative space-y-5 border-l border-slate-200 pl-6">
+              <ol className="relative space-y-5 border-l pl-6" style={{ borderColor: "#E8E2D9" }}>
                 {timelineSteps.map((step, idx) => (
                   <li key={idx} className="relative">
-                    <span className="absolute -left-[1.9rem] top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 shadow-sm shadow-emerald-300/50">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-white" strokeWidth={2.5} />
+                    <span
+                      className="absolute -left-[1.9rem] top-0.5 flex h-5 w-5 items-center justify-center rounded-full text-white"
+                      style={{ background: "#7C3AED" }}
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={2.5} />
                     </span>
-                    <p className="text-sm sm:text-base font-medium text-slate-700">
+                    <p className="text-sm sm:text-base font-semibold" style={{ color: "#5A5248" }}>
                       {step}
                     </p>
                   </li>
@@ -161,15 +178,25 @@ const AgentDashboard: React.FC = () => {
             </div>
 
             {/* AI Thinking Panel */}
-            <div className="rounded-3xl border border-slate-800 bg-slate-900 p-6 shadow-lg shadow-slate-300/40 sm:p-8">
+            <div
+              className="rounded-3xl border p-6 sm:p-8"
+              style={{
+                background: "#0D0B1E",
+                borderColor: "#2E2847",
+                boxShadow: "0 12px 36px rgba(13, 11, 30, 0.25)",
+              }}
+            >
               <div className="mb-5 flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-violet-500 to-fuchsia-600">
+                <div
+                  className="flex h-9 w-9 items-center justify-center rounded-xl"
+                  style={{ background: "linear-gradient(135deg, #7C3AED, #F97316)" }}
+                >
                   <Sparkles className="h-4.5 w-4.5 text-white" strokeWidth={2} />
                 </div>
                 <h2 className="text-base sm:text-lg font-bold text-white">
-                  AI Thinking Panel
+                  AI Execution Log
                 </h2>
-                <span className="ml-auto flex items-center gap-1.5 rounded-lg bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-400">
+                <span className="ml-auto flex items-center gap-1.5 rounded-lg bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-400">
                   <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
                   Live
                 </span>
@@ -177,7 +204,7 @@ const AgentDashboard: React.FC = () => {
               <div className="space-y-2.5 font-mono text-xs sm:text-sm">
                 {thinkingLines.map((line, idx) => (
                   <div key={idx} className="flex items-center gap-2.5 text-slate-300">
-                    <span className="h-1.5 w-1.5 flex-shrink-0 animate-pulse rounded-full bg-violet-400" />
+                    <span className="h-1.5 w-1.5 flex-shrink-0 animate-pulse rounded-full bg-purple-400" />
                     <span>{line}</span>
                   </div>
                 ))}
@@ -187,53 +214,53 @@ const AgentDashboard: React.FC = () => {
 
           <div className="space-y-8">
             {/* AI Decision Card */}
-            <div className="rounded-3xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-6 shadow-lg shadow-indigo-100/50">
+            <div
+              className="rounded-3xl border p-6"
+              style={{
+                background: "linear-gradient(135deg, #FFFFFF 0%, #F8F5FF 100%)",
+                borderColor: "#C4B5FD",
+                boxShadow: "0 8px 24px rgba(124, 58, 237, 0.08)",
+              }}
+            >
               <div className="mb-5 flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-500 to-violet-600 shadow-md shadow-indigo-300/50">
-                  <Target className="h-4.5 w-4.5 text-white" strokeWidth={2} />
+                <div
+                  className="flex h-9 w-9 items-center justify-center rounded-xl text-white"
+                  style={{ background: "linear-gradient(135deg, #7C3AED, #6D28D9)" }}
+                >
+                  <Target className="h-4.5 w-4.5" strokeWidth={2} />
                 </div>
-                <h2 className="text-base sm:text-lg font-bold text-slate-900">
-                  AI Decision
+                <h2 className="text-base sm:text-lg font-bold" style={{ color: "#0D0B1E" }}>
+                  AI Decision Breakdown
                 </h2>
               </div>
-              <div className="space-y-3 text-sm">
-                <div className="flex items-center justify-between rounded-xl bg-white/70 px-4 py-2.5">
-                  <span className="text-slate-500">Brand</span>
-                  <span className="font-semibold text-slate-800">Sony</span>
+              <div className="space-y-2.5 text-sm">
+                <div className="flex items-center justify-between rounded-xl bg-white px-4 py-2.5 border" style={{ borderColor: "#E8E2D9" }}>
+                  <span style={{ color: "#7A7068" }}>Brand</span>
+                  <span className="font-bold" style={{ color: "#0D0B1E" }}>Sony</span>
                 </div>
-                <div className="flex items-center justify-between rounded-xl bg-white/70 px-4 py-2.5">
-                  <span className="text-slate-500">Category</span>
-                  <span className="font-semibold text-slate-800">Headphones</span>
+                <div className="flex items-center justify-between rounded-xl bg-white px-4 py-2.5 border" style={{ borderColor: "#E8E2D9" }}>
+                  <span style={{ color: "#7A7068" }}>Category</span>
+                  <span className="font-bold" style={{ color: "#0D0B1E" }}>Headphones</span>
                 </div>
-                <div className="flex items-center justify-between rounded-xl bg-white/70 px-4 py-2.5">
-                  <span className="text-slate-500">Budget</span>
-                  <span className="font-semibold text-slate-800">₹5000</span>
+                <div className="flex items-center justify-between rounded-xl bg-white px-4 py-2.5 border" style={{ borderColor: "#E8E2D9" }}>
+                  <span style={{ color: "#7A7068" }}>Budget</span>
+                  <span className="font-bold" style={{ color: "#0D0B1E" }}>₹5,000</span>
                 </div>
-                <div className="flex items-center justify-between rounded-xl bg-white/70 px-4 py-2.5">
-                  <span className="text-slate-500">Best Product</span>
-                  <span className="max-w-[60%] truncate text-right font-semibold text-slate-800">
-                    Sony WH-1000XM5
-                  </span>
+                <div className="flex items-center justify-between rounded-xl bg-white px-4 py-2.5 border" style={{ borderColor: "#E8E2D9" }}>
+                  <span style={{ color: "#7A7068" }}>Confidence</span>
+                  <span className="font-bold text-emerald-600">96%</span>
                 </div>
-                <div className="flex items-center justify-between rounded-xl bg-white/70 px-4 py-2.5">
-                  <span className="text-slate-500">Confidence Score</span>
-                  <span className="font-semibold text-emerald-600">94%</span>
-                </div>
-                <div className="flex items-center justify-between rounded-xl bg-white/70 px-4 py-2.5">
-                  <span className="text-slate-500">Reasoning Score</span>
-                  <span className="font-semibold text-emerald-600">96%</span>
-                </div>
-                <div className="flex items-center justify-between rounded-xl bg-white/70 px-4 py-2.5">
-                  <span className="text-slate-500">Processing Time</span>
-                  <span className="font-semibold text-slate-800">1.8s</span>
+                <div className="flex items-center justify-between rounded-xl bg-white px-4 py-2.5 border" style={{ borderColor: "#E8E2D9" }}>
+                  <span style={{ color: "#7A7068" }}>Latency</span>
+                  <span className="font-bold" style={{ color: "#0D0B1E" }}>1.8s</span>
                 </div>
               </div>
             </div>
 
             {/* Recommended Product */}
             <div>
-              <h2 className="mb-4 text-base sm:text-lg font-bold text-slate-900">
-                Recommended Product
+              <h2 className="mb-4 text-base sm:text-lg font-bold" style={{ color: "#0D0B1E" }}>
+                Top Recommendation
               </h2>
               <ProductCard product={recommendedProduct} />
             </div>
@@ -241,58 +268,64 @@ const AgentDashboard: React.FC = () => {
         </div>
 
         {/* Agent Statistics */}
-        <div className="mt-10">
-          <h2 className="mb-6 text-lg sm:text-xl font-bold text-slate-900">
-            Agent Statistics
+        <div className="mt-12">
+          <h2 className="mb-6 text-lg sm:text-xl font-bold" style={{ color: "#0D0B1E" }}>
+            Performance Metrics
           </h2>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
             {agentStats.map((stat) => (
               <div
                 key={stat.label}
-                className="rounded-2xl border border-slate-200 bg-white/80 p-5 text-center shadow-sm"
+                className="rounded-2xl border p-5 text-center transition-all hover:-translate-y-px"
+                style={{
+                  background: "linear-gradient(135deg, #FFFFFF, #FDFAF7)",
+                  borderColor: "#E8E2D9",
+                }}
               >
-                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50">
+                <div
+                  className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl"
+                  style={{ background: "#EDE9FE" }}
+                >
                   {stat.icon}
                 </div>
-                <p className="text-lg font-bold text-slate-900">{stat.value}</p>
-                <p className="mt-1 text-xs text-slate-500">{stat.label}</p>
+                <p className="text-xl font-extrabold" style={{ color: "#0D0B1E" }}>{stat.value}</p>
+                <p className="mt-1 text-xs" style={{ color: "#7A7068" }}>{stat.label}</p>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Future Features */}
-        <div className="mt-10">
-          <h2 className="mb-6 text-lg sm:text-xl font-bold text-slate-900">
-            Future Features
+        {/* Roadmap */}
+        <div className="mt-12">
+          <h2 className="mb-6 text-lg sm:text-xl font-bold" style={{ color: "#0D0B1E" }}>
+            Upcoming Agent Capabilities
           </h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {roadmapFeatures.map((feature) => (
               <div
                 key={feature.label}
-                className="flex items-center gap-3 rounded-2xl border border-violet-100 bg-violet-50/50 p-5"
+                className="flex items-center gap-3 rounded-2xl border p-5"
+                style={{
+                  background: "linear-gradient(135deg, #FFFFFF, #FAF7F2)",
+                  borderColor: "#E8E2D9",
+                }}
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm">
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-xl"
+                  style={{ background: "#EDE9FE" }}
+                >
                   {feature.icon}
                 </div>
-                <p className="text-sm font-semibold text-slate-800">
+                <p className="text-sm font-bold" style={{ color: "#0D0B1E" }}>
                   {feature.label}
                 </p>
-                <Bell className="ml-auto h-4 w-4 text-violet-300" />
+                <Bell className="ml-auto h-4 w-4" style={{ color: "#C4B5FD" }} />
               </div>
             ))}
           </div>
         </div>
-
-        {/* Footer Message */}
-        <div className="mt-10 mb-4 rounded-3xl border border-slate-200 bg-white/60 p-6 text-center shadow-sm sm:p-8">
-          <p className="mx-auto max-w-2xl text-sm sm:text-base text-slate-500">
-            ShopMind AI automatically understands your shopping intent and
-            performs shopping actions on your behalf.
-          </p>
-        </div>
       </div>
-    </div>
+    </PageBackground>
   );
 };
 

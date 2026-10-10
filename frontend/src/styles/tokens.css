@@ -1,6 +1,5 @@
 /* ==========================================================================
-   ShopMind AI — Design Tokens
-   Clean, AI-inspired system (OpenAI × Perplexity × Linear)
+   ShopMind AI — Design Tokens (Warm Premium AI Shopping)
    ========================================================================== */
 
 @theme {
@@ -16,18 +15,18 @@
   --text-display: 3.5rem;
   --text-display--line-height: 1.08;
   --text-display--letter-spacing: -0.035em;
-  --text-display--font-weight: 600;
+  --text-display--font-weight: 700;
 
   /* Headings */
   --text-h1: 2.25rem;
   --text-h1--line-height: 1.15;
   --text-h1--letter-spacing: -0.03em;
-  --text-h1--font-weight: 600;
+  --text-h1--font-weight: 700;
 
   --text-h2: 1.875rem;
   --text-h2--line-height: 1.2;
   --text-h2--letter-spacing: -0.025em;
-  --text-h2--font-weight: 600;
+  --text-h2--font-weight: 700;
 
   --text-h3: 1.5rem;
   --text-h3--line-height: 1.25;
@@ -69,58 +68,67 @@
   --text-overline--font-weight: 600;
 
   /* --------------------------------------------------------------------------
-     Color palette — neutral surfaces
+     Color palette — warm cream backgrounds
      -------------------------------------------------------------------------- */
-  --color-background: #fafafa;
-  --color-foreground: #0c0c0d;
-  --color-surface: #ffffff;
-  --color-surface-subtle: #f4f4f5;
-  --color-surface-muted: #ececee;
-  --color-surface-elevated: #ffffff;
-  --color-surface-overlay: rgb(255 255 255 / 0.88);
+  --color-background: #FAF7F2;
+  --color-background-warm: #F5F0E8;
+  --color-foreground: #0D0B1E;
+  --color-surface: #FFFFFF;
+  --color-surface-subtle: #F8F5F0;
+  --color-surface-muted: #EDE9E0;
+  --color-surface-elevated: #FFFFFF;
+  --color-surface-overlay: rgb(255 255 255 / 0.92);
+  --color-surface-cream: #FDF9F3;
 
-  --color-border: #e4e4e7;
-  --color-border-subtle: #f0f0f2;
-  --color-border-strong: #d4d4d8;
+  --color-border: #E8E2D9;
+  --color-border-subtle: #F0EBE2;
+  --color-border-strong: #D4CCBF;
+  --color-border-warm: #E5DDD0;
 
-  --color-muted: #71717a;
-  --color-muted-subtle: #a1a1aa;
-  --color-muted-strong: #52525b;
+  --color-muted: #7A7068;
+  --color-muted-subtle: #A89F95;
+  --color-muted-strong: #5A5248;
 
   /* --------------------------------------------------------------------------
-     Color palette — brand accent (intelligent teal-emerald)
+     Brand: Purple/Violet (primary) + Orange/Peach (secondary)
      -------------------------------------------------------------------------- */
-  --color-accent-50: #ecfdf5;
-  --color-accent-100: #d1fae5;
-  --color-accent-200: #a7f3d0;
-  --color-accent-300: #6ee7b7;
-  --color-accent-400: #34d399;
-  --color-accent-500: #10b981;
-  --color-accent-600: #059669;
-  --color-accent-700: #047857;
-  --color-accent-800: #065f46;
-  --color-accent-900: #064e3b;
-  --color-accent-950: #022c22;
+  /* Purple accent */
+  --color-accent-50: #F5F3FF;
+  --color-accent-100: #EDE9FE;
+  --color-accent-200: #DDD6FE;
+  --color-accent-300: #C4B5FD;
+  --color-accent-400: #A78BFA;
+  --color-accent-500: #8B5CF6;
+  --color-accent-600: #7C3AED;
+  --color-accent-700: #6D28D9;
+  --color-accent-800: #5B21B6;
+  --color-accent-900: #4C1D95;
+  --color-accent-950: #2E1065;
 
-  --color-accent: #10b981;
-  --color-accent-foreground: #ffffff;
-  --color-accent-muted: #ecfdf5;
-  --color-accent-subtle: #d1fae5;
+  --color-accent: #7C3AED;
+  --color-accent-foreground: #FFFFFF;
+  --color-accent-muted: #F5F3FF;
+  --color-accent-subtle: #EDE9FE;
 
-  /* Secondary — cool violet (Linear-inspired) */
-  --color-secondary-50: #f5f3ff;
-  --color-secondary-100: #ede9fe;
-  --color-secondary-200: #ddd6fe;
-  --color-secondary-300: #c4b5fd;
-  --color-secondary-400: #a78bfa;
-  --color-secondary-500: #8b5cf6;
-  --color-secondary-600: #7c3aed;
-  --color-secondary-700: #6d28d9;
-  --color-secondary-800: #5b21b6;
-  --color-secondary-900: #4c1d95;
+  /* Orange/Peach secondary */
+  --color-secondary-50: #FFF7ED;
+  --color-secondary-100: #FFEDD5;
+  --color-secondary-200: #FED7AA;
+  --color-secondary-300: #FDBA74;
+  --color-secondary-400: #FB923C;
+  --color-secondary-500: #F97316;
+  --color-secondary-600: #EA580C;
+  --color-secondary-700: #C2410C;
+  --color-secondary-800: #9A3412;
+  --color-secondary-900: #7C2D12;
 
-  --color-secondary: #8b5cf6;
-  --color-secondary-foreground: #ffffff;
+  --color-secondary: #F97316;
+  --color-secondary-foreground: #FFFFFF;
+
+  /* Deep navy for headings */
+  --color-navy-900: #0D0B1E;
+  --color-navy-800: #1A1744;
+  --color-navy-700: #252060;
 
   /* Semantic */
   --color-success: #16a34a;
@@ -132,9 +140,10 @@
   --color-info: #2563eb;
   --color-info-muted: #eff6ff;
 
-  /* AI glow / gradient stops */
-  --color-glow-accent: rgb(16 185 129 / 0.35);
-  --color-glow-secondary: rgb(139 92 246 / 0.25);
+  /* Purple glow */
+  --color-glow-accent: rgb(124 58 237 / 0.20);
+  --color-glow-secondary: rgb(249 115 22 / 0.20);
+  --color-glow-purple: rgb(139 92 246 / 0.30);
 
   /* --------------------------------------------------------------------------
      Spacing system (4px base grid)
@@ -170,7 +179,7 @@
   --spacing-56: 14rem;
   --spacing-64: 16rem;
 
-  /* Semantic spacing aliases */
+  /* Semantic spacing */
   --spacing-section: 5rem;
   --spacing-container: 1.5rem;
   --spacing-card: 1.25rem;
@@ -188,36 +197,37 @@
   --radius-xl: 1rem;
   --radius-2xl: 1.25rem;
   --radius-3xl: 1.5rem;
+  --radius-4xl: 2rem;
   --radius-full: 9999px;
 
   /* Semantic radius */
-  --radius-button: 0.5rem;
-  --radius-input: 0.5rem;
-  --radius-card: 0.75rem;
-  --radius-modal: 1rem;
+  --radius-button: 0.625rem;
+  --radius-input: 0.625rem;
+  --radius-card: 1rem;
+  --radius-modal: 1.25rem;
   --radius-pill: 9999px;
 
   /* --------------------------------------------------------------------------
-     Shadows — soft, layered depth
+     Shadows — warm soft depth
      -------------------------------------------------------------------------- */
-  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.04);
-  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.04);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.04);
-  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.18);
-  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.04);
+  --shadow-xs: 0 1px 2px 0 rgb(13 11 30 / 0.04);
+  --shadow-sm: 0 1px 3px 0 rgb(13 11 30 / 0.06), 0 1px 2px -1px rgb(13 11 30 / 0.04);
+  --shadow-md: 0 4px 12px -1px rgb(13 11 30 / 0.07), 0 2px 4px -2px rgb(13 11 30 / 0.04);
+  --shadow-lg: 0 10px 25px -3px rgb(13 11 30 / 0.08), 0 4px 8px -4px rgb(13 11 30 / 0.04);
+  --shadow-xl: 0 20px 40px -5px rgb(13 11 30 / 0.10), 0 8px 16px -6px rgb(13 11 30 / 0.05);
+  --shadow-2xl: 0 25px 60px -12px rgb(13 11 30 / 0.20);
+  --shadow-inner: inset 0 2px 4px 0 rgb(13 11 30 / 0.04);
 
-  /* AI-inspired glow shadows */
-  --shadow-glow-sm: 0 0 0 1px rgb(16 185 129 / 0.08), 0 2px 8px rgb(16 185 129 / 0.12);
-  --shadow-glow-md: 0 0 0 1px rgb(16 185 129 / 0.12), 0 4px 16px rgb(16 185 129 / 0.18);
-  --shadow-glow-lg: 0 0 0 1px rgb(16 185 129 / 0.15), 0 8px 32px rgb(16 185 129 / 0.22);
-  --shadow-glow-accent: 0 0 24px var(--color-glow-accent);
-  --shadow-glow-secondary: 0 0 24px var(--color-glow-secondary);
+  /* Purple glow shadows */
+  --shadow-glow-sm: 0 0 0 1px rgb(124 58 237 / 0.08), 0 2px 10px rgb(124 58 237 / 0.15);
+  --shadow-glow-md: 0 0 0 1px rgb(124 58 237 / 0.12), 0 4px 20px rgb(124 58 237 / 0.20);
+  --shadow-glow-lg: 0 0 0 1px rgb(124 58 237 / 0.15), 0 8px 40px rgb(124 58 237 / 0.25);
+  --shadow-glow-accent: 0 0 30px var(--color-glow-accent);
+  --shadow-glow-secondary: 0 0 30px var(--color-glow-secondary);
 
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.04), 0 0 0 1px rgb(0 0 0 / 0.04);
-  --shadow-elevated: 0 8px 30px rgb(0 0 0 / 0.06), 0 0 0 1px rgb(0 0 0 / 0.04);
-  --shadow-focus: 0 0 0 3px rgb(16 185 129 / 0.25);
+  --shadow-card: 0 2px 8px rgb(13 11 30 / 0.06), 0 0 0 1px rgb(13 11 30 / 0.04);
+  --shadow-elevated: 0 8px 32px rgb(13 11 30 / 0.08), 0 0 0 1px rgb(13 11 30 / 0.04);
+  --shadow-focus: 0 0 0 3px rgb(124 58 237 / 0.25);
 
   /* --------------------------------------------------------------------------
      Transitions & easing
@@ -240,51 +250,42 @@
 }
 
 /* --------------------------------------------------------------------------
-   Dark mode tokens
+   Dark mode tokens (kept for compatibility)
    -------------------------------------------------------------------------- */
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer theme {
   .dark {
-    --color-background: #09090b;
-    --color-foreground: #fafafa;
-    --color-surface: #0f0f12;
-    --color-surface-subtle: #18181b;
-    --color-surface-muted: #27272a;
-    --color-surface-elevated: #141417;
-    --color-surface-overlay: rgb(15 15 18 / 0.92);
+    --color-background: #0E0B1A;
+    --color-foreground: #FAF7F2;
+    --color-surface: #16122A;
+    --color-surface-subtle: #1E1A33;
+    --color-surface-muted: #282340;
+    --color-surface-elevated: #1A1630;
+    --color-surface-overlay: rgb(14 11 26 / 0.92);
 
-    --color-border: #27272a;
-    --color-border-subtle: #1f1f23;
-    --color-border-strong: #3f3f46;
+    --color-border: #2E2847;
+    --color-border-subtle: #221E38;
+    --color-border-strong: #3D3760;
 
-    --color-muted: #a1a1aa;
-    --color-muted-subtle: #71717a;
-    --color-muted-strong: #d4d4d8;
+    --color-muted: #9087A5;
+    --color-muted-subtle: #6B6280;
+    --color-muted-strong: #BDB3CC;
 
-    --color-accent: #34d399;
-    --color-accent-foreground: #022c22;
-    --color-accent-muted: rgb(16 185 129 / 0.12);
-    --color-accent-subtle: rgb(16 185 129 / 0.08);
+    --color-accent: #A78BFA;
+    --color-accent-foreground: #1E1B4B;
+    --color-accent-muted: rgb(124 58 237 / 0.12);
+    --color-accent-subtle: rgb(124 58 237 / 0.08);
 
-    --color-secondary: #a78bfa;
-    --color-secondary-foreground: #1e1b4b;
+    --color-secondary: #FB923C;
+    --color-secondary-foreground: #431407;
 
     --color-success-muted: rgb(22 163 74 / 0.12);
     --color-warning-muted: rgb(217 119 6 / 0.12);
     --color-error-muted: rgb(220 38 38 / 0.12);
     --color-info-muted: rgb(37 99 235 / 0.12);
 
-    --color-glow-accent: rgb(52 211 153 / 0.2);
-    --color-glow-secondary: rgb(167 139 250 / 0.18);
-
-    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.3);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.45), 0 2px 4px -2px rgb(0 0 0 / 0.35);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.35);
-    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.55), 0 8px 10px -6px rgb(0 0 0 / 0.4);
-    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 0 0 1px rgb(255 255 255 / 0.06);
-    --shadow-elevated: 0 8px 30px rgb(0 0 0 / 0.45), 0 0 0 1px rgb(255 255 255 / 0.06);
-    --shadow-focus: 0 0 0 3px rgb(52 211 153 / 0.35);
+    --color-glow-accent: rgb(167 139 250 / 0.20);
+    --color-glow-secondary: rgb(251 146 60 / 0.18);
   }
 }

@@ -1,38 +1,47 @@
 import React from "react";
+import ShopMindLogo from "./ShopMindLogo";
 
 const Footer: React.FC = () => {
   const year = new Date().getFullYear();
 
   const links = [
-    { label: "Privacy", href: "#" },
-    { label: "Terms", href: "#" },
-    { label: "About", href: "#" },
-    { label: "Contact", href: "#" },
+    { label: "Privacy", href: "/privacy" },
+    { label: "Terms", href: "/terms" },
+    { label: "About", href: "/#how-it-works" },
+    { label: "Contact", href: "mailto:support@shopmind.ai" },
   ];
 
   return (
-    <footer className="w-full border-t border-gray-100 bg-white px-6 py-8">
-      <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 sm:flex-row">
+    <footer
+      className="relative w-full border-t px-4 py-8 sm:px-6 lg:px-8 overflow-hidden select-none"
+      style={{
+        backgroundColor: "#FAF7F2",
+        borderColor: "#E8E2D9",
+      }}
+    >
+      {/* Subtle bottom atmospheric dot grid */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-20"
+        style={{
+          backgroundImage: "radial-gradient(circle, rgba(124, 58, 237, 0.12) 1.2px, transparent 1.2px)",
+          backgroundSize: "28px 28px",
+        }}
+        aria-hidden="true"
+      />
 
-        {/* Brand */}
+      <div className="relative z-10 mx-auto flex max-w-7xl flex-col items-center justify-between gap-5 sm:flex-row">
+        {/* Brand Logo & Wordmark */}
         <div className="flex items-center gap-2 select-none">
-          <div className="flex h-5 w-5 items-center justify-center rounded-md bg-gray-900">
-            <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
-              <path d="M8 2L13 5.5V10.5L8 14L3 10.5V5.5L8 2Z" fill="white" />
-            </svg>
-          </div>
-          <span className="text-[13px] font-semibold text-gray-700">
-            ShopMind AI
-          </span>
+          <ShopMindLogo variant="full" size="xs" />
         </div>
 
-        {/* Links */}
-        <nav className="flex items-center gap-5">
+        {/* Footer Navigation Links */}
+        <nav className="flex items-center gap-6" aria-label="Footer navigation">
           {links.map(({ label, href }) => (
             <a
               key={label}
               href={href}
-              className="text-[12.5px] text-gray-400 transition hover:text-gray-700"
+              className="text-[13px] font-medium text-[#7A7068] transition-colors hover:text-[#7C3AED]"
             >
               {label}
             </a>
@@ -40,7 +49,7 @@ const Footer: React.FC = () => {
         </nav>
 
         {/* Copyright */}
-        <p className="text-[12px] text-gray-400">
+        <p className="text-[12px] text-[#A89F95]">
           © {year} ShopMind AI. All rights reserved.
         </p>
       </div>

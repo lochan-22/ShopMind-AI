@@ -33,8 +33,17 @@ class ComparisonService:
             self._resolve_product(product_a_id),
             self._resolve_product(product_b_id),
         )
+
+        if (
+            product_a.product_id == product_b.product_id
+            or product_b.product_id in product_a.merged_product_ids
+            or product_a.product_id in product_b.merged_product_ids
+        ):
+            raise ValueError("A product cannot be compared with itself.")
+
         compared_a = self._to_comparison_product(product_a)
         compared_b = self._to_comparison_product(product_b)
+
         insights = self._build_insights(compared_a, compared_b)
         pick_product_id = self._pick_product(insights)
 

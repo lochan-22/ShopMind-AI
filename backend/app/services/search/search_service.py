@@ -7,6 +7,7 @@ import logging
 from dataclasses import dataclass
 from time import monotonic
 
+from app.services.search.product_deduplicator import ProductDeduplicator
 from app.services.search.product_normalizer import (
     NormalizedProduct,
     ProductNormalizer,
@@ -41,6 +42,7 @@ class SearchService:
         self,
         providers: list[BaseProductProvider] | None = None,
         normalizer: ProductNormalizer | None = None,
+        deduplicator: ProductDeduplicator | None = None,
     ) -> None:
         """Create a service with optional provider implementations.
 
@@ -49,7 +51,9 @@ class SearchService:
         """
         self._providers = list(providers or [])
         self._normalizer = normalizer or ProductNormalizer()
+        self._deduplicator = deduplicator or ProductDeduplicator()
         self._external_products: dict[str, _ExternalProductCacheEntry] = {}
+
 
     @property
     def providers(self) -> tuple[BaseProductProvider, ...]:
@@ -93,7 +97,7 @@ class SearchService:
                 raise TypeError("Product providers must return a list of product records.")
             normalized_products.extend(self._normalizer.normalize_many(products))
 
-        merged_products = self._merge_products(normalized_products)
+        merged_products = self._deduplicator.deduplicate(normalized_products)
         self._cache_external_details_tokens(merged_products)
         return merged_products
 
@@ -145,11 +149,14 @@ class SearchService:
         }
         expiry = now + self._EXTERNAL_PRODUCT_CACHE_TTL_SECONDS
         for product in products:
-            self._external_products[product.product_id] = _ExternalProductCacheEntry(
+            entry = _ExternalProductCacheEntry(
                 product=product,
                 details_token=product.external_details_token,
                 expires_at=expiry,
             )
+            self._external_products[product.product_id] = entry
+            for merged_id in product.merged_product_ids:
+                self._external_products[merged_id] = entry
 
     def _get_cached_external_product(
         self, product_id: str
@@ -163,24 +170,12 @@ class SearchService:
             return None
         return cached
 
-    @staticmethod
-    def _merge_products(products: list[NormalizedProduct]) -> list[NormalizedProduct]:
-        """Merge products sharing an exact canonical ID and retain all offers."""
-        merged: dict[str, NormalizedProduct] = {}
-        for product in products:
-            existing = merged.get(product.product_id)
-            if existing is None:
-                merged[product.product_id] = product
-                continue
+    @classmethod
+    def _merge_products(cls, products: list[NormalizedProduct]) -> list[NormalizedProduct]:
+        """Merge products using the multi-level product deduplicator."""
+        deduplicator = ProductDeduplicator()
+        return deduplicator.deduplicate(products)
 
-            existing.offers.extend(
-                offer
-                for offer in product.offers
-                if offer not in existing.offers
-            )
-            SearchService._fill_missing_product_fields(existing, product)
-
-        return list(merged.values())
 
     @staticmethod
     def _fill_missing_product_fields(

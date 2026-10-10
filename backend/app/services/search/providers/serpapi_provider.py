@@ -23,8 +23,8 @@ class SerpApiProvider(BaseProductProvider):
     provider_name = "SerpApi Google Shopping"
     # The SDK uses ``requests``. A tuple gives it independent bounds for DNS/
     # TCP connection setup and for waiting for a response from SerpApi.
-    _DEFAULT_CONNECT_TIMEOUT_SECONDS = 2.0
-    _DEFAULT_READ_TIMEOUT_SECONDS = 6.0
+    _DEFAULT_CONNECT_TIMEOUT_SECONDS = 5.0
+    _DEFAULT_READ_TIMEOUT_SECONDS = 15.0
     _DEFAULT_MAX_SEARCH_ATTEMPTS = 2
     _DEFAULT_RETRY_BASE_DELAY_SECONDS = 0.25
 

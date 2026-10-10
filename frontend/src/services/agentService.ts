@@ -1,4 +1,4 @@
-import api from "./api";
+import api, { getApiBaseUrl } from "./api";
 import type { Product } from "./productService";
 
 export interface ChatResponse {
@@ -12,6 +12,7 @@ export interface ChatHistoryMessage {
 
 export type StreamEvent =
   | { type: "token"; content: string }
+  | { type: "products"; products: Product[] }
   | { type: "done" }
   | { type: "error"; message: string };
 
@@ -50,18 +51,34 @@ export const recommend = async (): Promise<RecommendResponse> => {
   return response.data;
 };
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000/api";
-
 export const streamChat = async (
   message: string,
   history: ChatHistoryMessage[],
   onEvent: (event: StreamEvent) => void,
 ): Promise<void> => {
-  const response = await fetch(`${apiBaseUrl}/agent/chat/stream`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message, history }),
-  });
+  const currentBaseUrl = getApiBaseUrl();
+  let response: Response;
+  try {
+    response = await fetch(`${currentBaseUrl}/agent/chat/stream`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, history }),
+    });
+  } catch (err) {
+    // If the active URL fails with a connection error, try alternate port
+    const altBaseUrl = currentBaseUrl.includes("8001")
+      ? currentBaseUrl.replace("8001", "8000")
+      : currentBaseUrl.includes("8000")
+        ? currentBaseUrl.replace("8000", "8001")
+        : "http://127.0.0.1:8001/api";
+
+    response = await fetch(`${altBaseUrl}/agent/chat/stream`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, history }),
+    });
+  }
+
 
   if (!response.ok) {
     let message = "I couldn't connect to the AI assistant. Please try again.";
@@ -86,8 +103,9 @@ export const streamChat = async (
     if (!eventType) return;
 
     try {
-      const payload = JSON.parse(data) as { content?: string; message?: string };
+      const payload = JSON.parse(data) as { content?: string; message?: string; products?: Product[] };
       if (eventType === "token" && payload.content) onEvent({ type: "token", content: payload.content });
+      if (eventType === "products" && Array.isArray(payload.products)) onEvent({ type: "products", products: payload.products });
       if (eventType === "done") onEvent({ type: "done" });
       if (eventType === "error") onEvent({ type: "error", message: payload.message ?? "The AI assistant could not respond." });
     } catch {
