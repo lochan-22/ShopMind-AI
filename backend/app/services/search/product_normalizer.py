@@ -224,12 +224,23 @@ class ProductNormalizer:
                 raise TypeError("Product offers must be provided as a list of mappings.")
             offers = [self._normalize_offer(offer, condition=condition) for offer in offers_value]
 
+        desc_parts = []
+        raw_desc = self._first_value(product, "description", "snippet")
+        if raw_desc and isinstance(raw_desc, str):
+            desc_parts.append(raw_desc)
+        raw_exts = product.get("extensions")
+        if isinstance(raw_exts, list):
+            ext_str = " | ".join(str(x) for x in raw_exts if str(x).strip())
+            if ext_str:
+                desc_parts.append(ext_str)
+        combined_desc = " | ".join(desc_parts) if desc_parts else None
+
         normalized_product = NormalizedProduct(
             product_id=str(product_id),
             name=clean_title,
             brand=brand,
             category=self._optional_text(product.get("category")),
-            description=self._optional_text(product.get("description")),
+            description=self._optional_text(combined_desc),
             image_url=self._optional_text(self._first_value(product, "image_url", "image")),
             rating=self._optional_float(product.get("rating")),
             review_count=self._optional_int(product.get("review_count", product.get("reviews"))),

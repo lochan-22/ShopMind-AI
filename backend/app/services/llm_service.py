@@ -168,15 +168,28 @@ def extract_budget(query: str) -> Optional[int]:
     text = query.strip()
     text_lower = text.lower()
 
-    # Pattern 1: numbers followed by 'k' (e.g., "10k", "5 k") -> multiply by 1000
+    # Pattern 1a: numbers followed by 'k' or 'thousand' (e.g., "10k", "70 thousand", "70 thousands")
     k_pattern = re.search(
-        r"(?:under|below|less than|within|upto|up to|around|budget of|for)?\s*"
-        r"(\d+(?:\.\d+)?)\s*k\b",
+        r"(?:under|below|less than|within|upto|up to|around|budget of|budget|for|max|at most)?\s*"
+        r"(?:₹|rs\.?|inr|\$)?\s*(\d+(?:\.\d+)?)\s*(?:k\b|thousands?\b)",
         text_lower,
     )
     if k_pattern:
         try:
             value = float(k_pattern.group(1)) * 1000
+            return int(value)
+        except ValueError:
+            pass
+
+    # Pattern 1b: numbers followed by 'lakh', 'lacs', 'lac' (e.g. "1.5 lakh", "2 lakhs") -> multiply by 100,000
+    lakh_pattern = re.search(
+        r"(?:under|below|less than|within|upto|up to|around|budget of|budget|for|max|at most)?\s*"
+        r"(?:₹|rs\.?|inr|\$)?\s*(\d+(?:\.\d+)?)\s*(?:lakhs?|lacs?|lac\b)",
+        text_lower,
+    )
+    if lakh_pattern:
+        try:
+            value = float(lakh_pattern.group(1)) * 100000
             return int(value)
         except ValueError:
             pass
@@ -205,25 +218,20 @@ def extract_budget(query: str) -> Optional[int]:
         except ValueError:
             pass
 
-    # Pattern 4: generic budget-related phrasing followed by plain digits
+    # Pattern 4: generic budget-related phrasing followed by digits (excluding hardware spec units)
     generic_pattern = re.search(
-        r"(?:under|below|less than|within|upto|up to|around|budget of|budget|for)\s*"
-        r"(\d[\d,]*(?:\.\d+)?)",
+        r"(?:under|below|less than|within|upto|up to|around|budget of|budget|max|at most)\s*(?:₹|rs\.?|inr|\$)?\s*"
+        r"(\d[\d,]*(?:\.\d+)?)\s*(?!(?:gb|tb|mb|hz|ghz|dpi|mah|w|watts?|inch|cm|mm|kg|g|cores?|gen|fps|k\b|thousands?|lakhs?)\b)",
         text_lower,
     )
     if generic_pattern:
         raw_number = generic_pattern.group(1).replace(",", "")
         try:
-            return int(float(raw_number))
-        except ValueError:
-            pass
-
-    # Pattern 5: fallback - any standalone number with 3+ digits (likely a price)
-    fallback_pattern = re.search(r"\b(\d{3,}(?:,\d{3})*)\b", text_lower)
-    if fallback_pattern:
-        raw_number = fallback_pattern.group(1).replace(",", "")
-        try:
-            return int(raw_number)
+            num = int(float(raw_number))
+            # Reject model numbers if no currency symbol was used in the query
+            if num in (3050, 4050, 4060, 4070, 4080, 4090, 2050, 1650, 3520, 5520, 7520, 14, 15, 16):
+                return None
+            return num
         except ValueError:
             pass
 

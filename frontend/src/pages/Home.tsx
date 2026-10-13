@@ -1,11 +1,10 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Sparkles, Search, ArrowRight } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Sparkles, Search, ArrowRight, Mic } from "lucide-react";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
 import PageBackground from "../components/common/PageBackground";
 import ShopMindText from "../components/common/ShopMindText";
-import { useAgent } from "../agent/context/AgentContext";
 import HeroVisual from "../components/home/HeroVisual";
 import FeatureStrip from "../components/home/FeatureStrip";
 import ShopByCategory from "../components/home/ShopByCategory";
@@ -25,8 +24,23 @@ import {
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
-  const { openAgent } = useAgent();
+  const location = useLocation();
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState<string>("");
+  const [heroVoiceFeedback, setHeroVoiceFeedback] = useState<boolean>(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("focus") === "search" || (location.state as { focusSearch?: boolean } | null)?.focusSearch) {
+      const timer = setTimeout(() => {
+        if (searchInputRef.current) {
+          searchInputRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+          searchInputRef.current.focus();
+        }
+      }, 120);
+      return () => clearTimeout(timer);
+    }
+  }, [location.search, location.state]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,12 +48,19 @@ const Home: React.FC = () => {
     navigate(`/search?q=${encodeURIComponent(query.trim())}`);
   };
 
+  const handleHeroVoiceInput = () => {
+    // Reusable voice-input entry point for hero shopping queries (wired to speech recognition in future phase)
+    console.info("[ShopMind AI] Hero voice shopping query triggered. Speech recognition pending implementation.");
+    setHeroVoiceFeedback(true);
+    setTimeout(() => setHeroVoiceFeedback(false), 2200);
+  };
+
   return (
     <PageBackground>
       <Navbar />
 
       {/* ── 1. HERO SECTION ── */}
-      <section className="relative w-full overflow-hidden pt-8 pb-14 sm:pt-12 sm:pb-20">
+      <section className="relative w-full overflow-hidden pt-5 pb-8 sm:pt-12 sm:pb-20 bg-section-hero border-b border-[#E8E2D9]/60">
         {/* Subtle peach atmospheric gradient (bottom-left) */}
         <div
           className="pointer-events-none absolute -bottom-24 -left-20 h-96 w-96 rounded-full opacity-35 blur-3xl select-none"
@@ -102,77 +123,130 @@ const Home: React.FC = () => {
 
         {/* Hero Container */}
         <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-8">
+          <div className="grid grid-cols-1 items-center gap-6 sm:gap-12 lg:grid-cols-12 lg:gap-8">
 
             {/* LEFT / CENTER: Text, Search, Flow */}
             <div className="flex flex-col items-start text-left lg:col-span-7">
               {/* Companion Badge */}
               <div
-                className="mb-5 inline-flex items-center gap-2 rounded-full border border-purple-200 bg-white/85 px-4 py-1.5 text-xs font-semibold text-[#5A5248] shadow-sm backdrop-blur-md"
+                className="mb-3 sm:mb-5 inline-flex items-center gap-2 rounded-full border border-purple-200 bg-white/85 px-4 py-1.5 text-xs font-semibold text-[#5A5248] shadow-sm backdrop-blur-md"
               >
                 <Sparkles className="h-3.5 w-3.5 text-[#7C3AED]" />
                 <span>Your AI Shopping Companion</span>
               </div>
 
               {/* Strong ShopMind AI Headline */}
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-[#0D0B1E] leading-[1.12]">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-[#0D0B1E] leading-[1.14] sm:leading-[1.12]">
                 Shop Smarter <br />
                 with <ShopMindText />
               </h1>
 
               {/* Supporting Description */}
-              <p className="mt-4 max-w-xl text-sm sm:text-base leading-relaxed text-[#7A7068]">
+              <p className="mt-3 sm:mt-4 max-w-xl text-sm sm:text-base leading-relaxed text-[#7A7068]">
                 Describe what you're looking for. <ShopMindText /> searches
                 live products, compares seller deals, and helps you find the right option.
               </p>
 
               {/* Natural-Language Shopping Search Field & Buttons */}
+              {/* Search label */}
+              <p className="mt-5 sm:mt-8 text-xs font-bold uppercase tracking-widest text-[#8E8478]">
+                What are you shopping for?
+              </p>
+
               <form
                 onSubmit={handleSubmit}
                 id="hero-search"
-                className="mt-8 flex w-full max-w-xl flex-col gap-2.5 sm:flex-row sm:items-center"
+                className="mt-3 flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:max-w-[700px] lg:max-w-[740px]"
               >
-                <div className="relative flex-1">
+                {/* Search input field */}
+                <div className="relative flex-1 w-full">
                   <Search
-                    className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#A89F95]"
+                    className="pointer-events-none absolute left-3.5 sm:left-4.5 top-1/2 h-5 w-5 -translate-y-1/2 text-[#A89F95]"
                   />
                   <input
+                    ref={searchInputRef}
+                    id="hero-search-input"
                     type="text"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="e.g. best laptop for college under ₹60000"
-                    className="w-full rounded-2xl border border-[#E8E2D9] bg-white py-3.5 pl-11 pr-4 text-xs sm:text-sm font-medium outline-none transition-all placeholder:text-[#A89F95] shadow-sm focus:border-[#7C3AED] focus:ring-2 focus:ring-purple-200"
+                    placeholder="What are you looking to buy?"
+                    className="h-12 sm:h-[64px] w-full rounded-xl sm:rounded-2xl border border-[#E4DED5] bg-white pl-11 sm:pl-12 pr-4 text-[15px] sm:text-[17px] font-medium text-[#0D0B1E] placeholder:text-[#A89F95] shadow-sm outline-none transition-all focus:border-[#7C3AED] focus:ring-2 focus:ring-purple-200/60"
                   />
                 </div>
 
-                <div className="flex items-center gap-2">
+                {/* Actions row: clean row on mobile, inline direct siblings on desktop */}
+                <div className="flex w-full items-center gap-2.5 sm:w-auto sm:contents">
+                  {/* Hero voice input button */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={handleHeroVoiceInput}
+                      title="Search by voice"
+                      aria-label="Search by voice"
+                      className="group flex h-12 w-12 min-h-[48px] min-w-[48px] sm:h-[64px] sm:w-[64px] flex-shrink-0 items-center justify-center rounded-xl sm:rounded-2xl border border-[#E4DED5] bg-white text-[#7C3AED] shadow-sm transition-all hover:border-[#C4B5FD] hover:bg-purple-50/70 hover:shadow-md active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]"
+                    >
+                      <Mic className="h-5 w-5 sm:h-6 sm:w-6 transition-transform duration-200 group-hover:scale-110" />
+                    </button>
+
+                    {/* Temporary feedback tooltip */}
+                    {heroVoiceFeedback && (
+                      <span className="pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-[#0D0B1E]/95 px-2.5 py-1 text-[11px] font-semibold text-white shadow-md backdrop-blur-sm">
+                        Voice search coming soon
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Primary search submit button */}
                   <button
                     type="submit"
                     disabled={!query.trim()}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-2xl px-6 py-3.5 text-xs sm:text-sm font-bold text-white transition-all hover:-translate-y-0.5 shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex h-12 min-h-[48px] sm:h-[64px] flex-1 sm:flex-initial items-center justify-center gap-2 rounded-xl sm:rounded-2xl px-6 sm:px-7 text-[15px] sm:text-base font-bold text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 flex-shrink-0 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
                     style={{
                       background: "linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%)",
-                      boxShadow: "0 4px 14px rgba(124,58,237,0.32)",
+                      boxShadow: "0 6px 18px rgba(124, 58, 237, 0.32)",
                     }}
                   >
-                    Search
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={openAgent}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-2xl border border-[#DDD6FE] bg-white/90 px-4 py-3.5 text-xs sm:text-sm font-bold text-[#7C3AED] transition-all hover:bg-purple-50 shadow-sm"
-                  >
-                    <Sparkles className="h-3.5 w-3.5 text-[#7C3AED]" />
-                    AI Assistant
+                    <span>Search</span>
+                    <ArrowRight className="h-4 w-4" />
                   </button>
                 </div>
               </form>
 
               {/* Shopping Workflow Indicator */}
+              {/* Mobile 2-line layout (< sm) */}
               <div
-                className="mt-6 inline-flex flex-wrap items-center gap-2 rounded-full border border-[#E8E2D9] bg-white/75 px-4 py-1.5 text-[11px] font-semibold text-[#5A5248] backdrop-blur-sm shadow-sm"
+                data-workflow-pill="mobile"
+                className="mt-4 flex sm:hidden flex-col gap-1.5 w-full max-w-[340px] rounded-2xl border border-[#E8E2D9] bg-white/85 p-2.5 text-[11px] font-semibold text-[#5A5248] backdrop-blur-sm shadow-sm"
+              >
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-purple-500" />
+                    <span>User Intent</span>
+                  </div>
+                  <span className="text-[#7C3AED] font-bold">→</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-indigo-500" />
+                    <span>AI Search</span>
+                  </div>
+                </div>
+                <div className="h-px w-full bg-[#E8E2D9]/60" />
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-purple-600" />
+                    <span>Live Comparison</span>
+                  </div>
+                  <span className="text-[#7C3AED] font-bold">→</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-orange-500" />
+                    <span className="font-bold text-[#EA580C]">Best Offer</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Desktop single inline pill (sm+) */}
+              <div
+                data-workflow-pill="desktop"
+                className="mt-6 hidden sm:inline-flex items-center gap-2 rounded-full border border-[#E8E2D9] bg-white/75 px-4 py-1.5 text-[11px] font-semibold text-[#5A5248] backdrop-blur-sm shadow-sm"
               >
                 <span>User Intent</span>
                 <span className="text-[#7C3AED]">→</span>

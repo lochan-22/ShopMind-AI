@@ -90,6 +90,22 @@
   --color-muted-strong: #5A5248;
 
   /* --------------------------------------------------------------------------
+     Section background system tokens
+     -------------------------------------------------------------------------- */
+  --color-bg-page: #FAF7F2;
+  --color-bg-section-hero: #FAF7F2;
+  --color-bg-section-features: #FFFFFF;
+  --color-bg-section-categories: #F8F4EE;
+  --color-bg-section-trending: #FAF7F2;
+  --color-bg-section-how-it-works: #F6F3FC;
+  --color-bg-section-workflow: #F5F0FB;
+  --color-bg-section-future: #F8F5F0;
+  --color-bg-card: #FFFFFF;
+  --color-bg-footer: #F3EFEA;
+  --color-primary-purple: #7C3AED;
+  --color-secondary-lavender: #DDD6FE;
+
+  /* --------------------------------------------------------------------------
      Brand: Purple/Violet (primary) + Orange/Peach (secondary)
      -------------------------------------------------------------------------- */
   /* Purple accent */

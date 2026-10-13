@@ -12,6 +12,16 @@ export interface ProductOffer {
   is_best_price: boolean;
 }
 
+export const getProductComparisonId = (product: { product_id?: string; id?: number | string }): string => {
+  if (product.product_id && String(product.product_id).trim()) {
+    return String(product.product_id).trim();
+  }
+  if (product.id != null) {
+    return String(product.id);
+  }
+  return "";
+};
+
 export interface Product {
   id: number;
   name: string;
@@ -29,13 +39,25 @@ export interface Product {
   product_url?: string | null;
   offers?: ProductOffer[];
   recommendation_badge?: string;
+  why_recommended?: string;
+  limitation?: string;
+  verified_specs?: Record<string, string>;
+  score?: number;
+  score_breakdown?: Record<string, number>;
 }
 
 export interface AIAnalysis {
+  direct_answer?: string;
   summary: string;
   key_criteria: string[];
+  trade_offs?: string;
+  final_recommendation?: string;
   budget_verdict: string;
   top_pick_reason: string;
+  limitations?: string;
+  missing_information?: string | null;
+  analysis_source?: "openrouter" | "deterministic_fallback";
+  model?: string | null;
 }
 
 export interface ExtractedIntent {
@@ -43,7 +65,20 @@ export interface ExtractedIntent {
   category: string | null;
   brand: string | null;
   budget: number | null;
+  budget_min?: number | null;
+  budget_max?: number | null;
+  currency?: string | null;
+  use_case?: string | null;
   features: string[];
+  required_features?: string[];
+  preferred_features?: string[];
+  excluded_features?: string[];
+  preferred_brands?: string[];
+  ranking_priorities?: string[];
+  explicit_priorities?: string[];
+  unrequested_features?: string[];
+  missing_information?: string | null;
+  search_queries?: string[];
 }
 
 export interface ShoppingDecision {
@@ -54,6 +89,7 @@ export interface ShoppingDecision {
   top_recommendations: Product[];
   all_products: Product[];
   total_found: number;
+  qualifying_count?: number;
 }
 
 export interface ComparisonOffer {

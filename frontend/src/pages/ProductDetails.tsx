@@ -13,6 +13,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import Navbar from "../components/common/Navbar";
+import Footer from "../components/common/Footer";
 import PageBackground from "../components/common/PageBackground";
 import { ProductSearchForm } from "../components/product/ProductSearchForm";
 import { getExternalProduct, getProduct } from "../services/productService";
@@ -379,6 +380,8 @@ const ProductDetails: React.FC = () => {
           </div>
         )}
       </div>
+
+      <Footer />
     </PageBackground>
   );
 };

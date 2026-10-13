@@ -15,6 +15,7 @@ import {
   GitCompare,
 } from "lucide-react";
 import Navbar from "../components/common/Navbar";
+import Footer from "../components/common/Footer";
 import PageBackground from "../components/common/PageBackground";
 import { ProductCard } from "../components/product/ProductCard";
 import type { Product } from "../services/productService";
@@ -325,6 +326,8 @@ const AgentDashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <Footer />
     </PageBackground>
   );
 };

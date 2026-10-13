@@ -69,39 +69,6 @@ export const PageBackground: React.FC<PageBackgroundProps> = ({
           <rect width="1440" height="4" fill="url(#topline)" />
         </svg>
 
-        {/* Abstract paint stroke — upper left */}
-        <svg
-          className="absolute top-20 -left-8 opacity-[0.07]"
-          width="200"
-          height="120"
-          viewBox="0 0 200 120"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M10 80 Q 60 10, 120 60 Q 170 100, 190 40"
-            stroke="#7C3AED"
-            strokeWidth="18"
-            fill="none"
-            strokeLinecap="round"
-          />
-        </svg>
-
-        {/* Abstract paint stroke — lower right */}
-        <svg
-          className="absolute bottom-20 -right-8 opacity-[0.08]"
-          width="180"
-          height="100"
-          viewBox="0 0 180 100"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M10 50 Q 50 10, 100 50 Q 140 90, 170 40"
-            stroke="#F97316"
-            strokeWidth="16"
-            fill="none"
-            strokeLinecap="round"
-          />
-        </svg>
       </div>
     )}
 

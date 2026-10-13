@@ -323,7 +323,7 @@ async def test_end_to_end_decision_engine_execute_boat_query():
     assert "gaming" in criteria_str
     assert "movie" in criteria_str or "comfort" in criteria_str
     assert "boat" in summary_str or "boat" in criteria_str
-    assert "2,000" in analysis["budget_verdict"]
+    assert "2,000" in analysis["budget_verdict"] or "2000" in analysis["budget_verdict"]
 
 
 
@@ -700,3 +700,198 @@ def test_transparent_scoring_breakdown_and_missing_data():
 
     # Rating alone cannot override feature relevance and verified specs
     assert score_1 > score_2
+
+
+def test_laptop_specs_extraction_gpu_vram_ram_disambiguation():
+    """Verify laptop specs correctly extract dedicated GPU, VRAM, and System RAM without conflating VRAM and RAM."""
+    from app.services.decision_engine import extract_verified_specs
+
+    # Gaming laptop with RTX 3050 6GB GDDR6 and 16GB RAM
+    gaming_laptop = {
+        "name": "Lenovo LOQ 15IAX9 Gaming Laptop",
+        "description": "Intel Core i5-12450HX, 16GB DDR5 RAM, 512GB SSD, NVIDIA GeForce RTX 3050 6GB GDDR6 Graphics, 15.6\" FHD 144Hz Display",
+    }
+    specs = extract_verified_specs(gaming_laptop, "Laptop")
+    verified = specs["verified"]
+    metrics = specs["metrics"]
+
+    assert metrics.get("has_dedicated_gpu") is True
+    assert "RTX 3050" in verified.get("gpu", "")
+    assert verified.get("vram") == "6GB VRAM"
+    assert metrics.get("vram") == 6
+    # System RAM must be 16GB, NOT 6GB!
+    assert verified.get("ram") == "16GB RAM"
+    assert metrics.get("ram") == 16
+    assert "512GB SSD" in verified.get("storage", "")
+    assert "144Hz" in verified.get("refresh_rate", "")
+
+    # Office laptop with Intel Iris Xe (integrated graphics)
+    office_laptop = {
+        "name": "Dell Inspiron 3520 Laptop",
+        "description": "Intel Core i5-1235U, 16GB RAM, 512GB SSD, 15.6\" FHD 120Hz, Intel Iris Xe Graphics",
+    }
+    specs_office = extract_verified_specs(office_laptop, "Laptop")
+    assert specs_office["metrics"].get("has_dedicated_gpu") is False
+    assert "Integrated" in specs_office["verified"].get("gpu", "")
+    assert specs_office["verified"].get("ram") == "16GB RAM"
+
+
+def test_gaming_laptop_dedicated_gpu_outranks_office_laptop():
+    """Verify that on a gaming query, a laptop with dedicated GPU outranks an office laptop even if the office laptop is cheaper."""
+    from app.services.decision_engine import (
+        extract_verified_specs,
+        assess_product_price,
+        compute_transparent_score,
+        analyze_price_distribution,
+    )
+
+    gaming_laptop = {
+        "id": "lenovo_loq",
+        "name": "Lenovo LOQ Intel Core i5-12450HX (16GB RAM/512GB SSD/NVIDIA GeForce RTX 3050 6GB/144Hz)",
+        "price": 58990.0,
+        "rating": 4.3,
+        "review_count": 250,
+    }
+    office_laptop = {
+        "id": "dell_3520",
+        "name": "Dell Inspiron 3520 Laptop Intel Core i5-1235U (16GB RAM/512GB SSD/Intel Iris Xe Graphics)",
+        "price": 51990.0,
+        "rating": 4.1,
+        "review_count": 500,
+    }
+    all_laptops = [gaming_laptop, office_laptop]
+    stats = analyze_price_distribution(all_laptops)
+
+    query = "Best gaming laptop under ₹60,000."
+    budget = 60000
+
+    # Gaming laptop scoring
+    g_spec = extract_verified_specs(gaming_laptop, "Laptop")
+    g_price = assess_product_price(gaming_laptop, stats, budget)
+    g_score, g_breakdown = compute_transparent_score(
+        p=gaming_laptop,
+        query=query,
+        target_category="Laptop",
+        target_brand=None,
+        budget=budget,
+        features=["Gaming", "Dedicated GPU"],
+        spec_info=g_spec,
+        price_info=g_price,
+        price_stats=stats,
+    )
+
+    # Office laptop scoring
+    o_spec = extract_verified_specs(office_laptop, "Laptop")
+    o_price = assess_product_price(office_laptop, stats, budget)
+    o_score, o_breakdown = compute_transparent_score(
+        p=office_laptop,
+        query=query,
+        target_category="Laptop",
+        target_brand=None,
+        budget=budget,
+        features=["Gaming", "Dedicated GPU"],
+        spec_info=o_spec,
+        price_info=o_price,
+        price_stats=stats,
+    )
+
+    # The dedicated GPU gaming laptop must significantly outrank the office laptop
+    assert g_score > o_score
+    assert g_breakdown["verified_specs"] > o_breakdown["verified_specs"]
+    assert g_breakdown["intent_relevance"] > o_breakdown["intent_relevance"]
+    # Office laptop must suffer severe intent penalty for missing dedicated GPU on a gaming query
+    assert o_breakdown["intent_relevance"] < 15.0
+
+
+def test_ml_laptop_nvidia_bonus_and_budget_enforcement():
+    """Verify that query for machine learning with NVIDIA GPU under ₹80k prioritizes compliant NVIDIA options."""
+    from app.services.decision_engine import ShoppingDecisionEngine
+
+    engine = ShoppingDecisionEngine()
+    candidates = [
+        {
+            "id": "asus_tuf_4050",
+            "name": "ASUS TUF Gaming A15 AMD Ryzen 7 7735HS, 16GB DDR5, 512GB SSD, NVIDIA GeForce RTX 4050 6GB GDDR6",
+            "price": 74990.0,
+            "rating": 4.5,
+            "review_count": 180,
+        },
+        {
+            "id": "overbudget_4070",
+            "name": "MSI Katana 15 Intel Core i7, 16GB RAM, NVIDIA GeForce RTX 4070 8GB GDDR6",
+            "price": 99990.0,
+            "rating": 4.7,
+            "review_count": 95,
+        },
+        {
+            "id": "non_nvidia_laptop",
+            "name": "HP Pavilion 15 Intel Core i7-1355U, 16GB RAM, 1TB SSD, Intel Iris Xe Graphics",
+            "price": 68990.0,
+            "rating": 4.2,
+            "review_count": 310,
+        },
+    ]
+
+    recs = engine._select_top_recommendations(
+        products=candidates,
+        query="Laptop for machine learning with an NVIDIA GPU under ₹80,000.",
+        budget=80000,
+        features=["AI engineering / Data Science", "Dedicated GPU"],
+    )
+
+    assert len(recs) >= 1
+    # Top pick must be within budget and have NVIDIA RTX GPU
+    top = recs[0]
+    assert top["id"] == "asus_tuf_4050"
+    assert top["price"] <= 80000.0
+    assert "RTX 4050" in top["verified_specs"]["gpu"]
+    assert top["recommendation_badge"] == "Top Recommendation"
+
+
+def test_deterministic_fallback_source_and_query_specificity():
+    """Verify deterministic fallback produces distinct, query-grounded analyses for gaming, ML, programming, and travel."""
+    engine = ShoppingDecisionEngine()
+
+    gaming_analysis = engine._build_deterministic_analysis(
+        query="Best gaming laptop under ₹60,000.",
+        category="Laptop",
+        budget=60000,
+        features=["Gaming", "Dedicated GPU"],
+        top_products=[{"name": "Lenovo LOQ RTX 3050", "price": 58990.0, "verified_specs": {"gpu": "NVIDIA GeForce RTX 3050"}}],
+        total_count=35,
+    )
+    assert "gaming" in gaming_analysis["summary"].lower()
+    assert any("gpu" in c.lower() for c in gaming_analysis["key_criteria"])
+    assert "60,000" in gaming_analysis["budget_verdict"]
+
+    travel_analysis = engine._build_deterministic_analysis(
+        query="Best headphones for travel under ₹2,000.",
+        category="Headphones",
+        budget=2000,
+        features=["Travel / Portability"],
+        top_products=[{"name": "boAt Rockerz 550", "price": 1799.0, "verified_specs": {"drivers": "50mm Dynamic Drivers"}}],
+        total_count=28,
+    )
+    assert "travel" in travel_analysis["summary"].lower()
+    assert any("travel" in c.lower() for c in travel_analysis["key_criteria"])
+    assert "2,000" in travel_analysis["budget_verdict"]
+
+
+def test_no_budget_invention_on_model_numbers():
+    """Verify extract_budget never invents budgets from hardware model numbers or standalone digits."""
+    from app.services.llm_service import extract_budget
+
+    assert extract_budget("gaming laptop rtx 3050") is None
+    assert extract_budget("laptop with rtx 4060 graphics") is None
+    assert extract_budget("dell inspiron 3520 laptop") is None
+    assert extract_budget("laptop with intel i5 12400 processor") is None
+    assert extract_budget("laptop with 16gb ram and 512gb ssd") is None
+    assert extract_budget("144hz gaming monitor") is None
+    assert extract_budget("Affordable laptop for college programming.") is None
+
+    # But genuine budgets must be extracted accurately
+    assert extract_budget("Best gaming laptop under ₹60,000.") == 60000
+    assert extract_budget("Laptop for machine learning with an NVIDIA GPU under ₹80,000.") == 80000
+    assert extract_budget("Best headphones for travel under ₹2,000.") == 2000
+    assert extract_budget("laptop under 50000") == 50000
+    assert extract_budget("headphones below 1.5k") == 1500

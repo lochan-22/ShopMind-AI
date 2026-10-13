@@ -99,7 +99,10 @@ const TrendingProducts: React.FC = () => {
   };
 
   return (
-    <section className="relative w-full py-16 overflow-hidden">
+    <section
+      className="relative w-full py-16 overflow-hidden border-b border-[#E8E2D9]/60"
+      style={{ backgroundColor: "#FAF7F2" }}
+    >
       {/* ── Background Atmosphere & Dotted Grid ── */}
       <div
         className="pointer-events-none absolute inset-0 opacity-25 select-none"

@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { LayoutGrid } from "lucide-react";
 import Navbar from "../components/common/Navbar";
+import Footer from "../components/common/Footer";
 import PageBackground from "../components/common/PageBackground";
 import { MAIN_CATEGORIES } from "../data/categoryData";
 
@@ -140,6 +141,8 @@ const Categories: React.FC = () => {
           ))}
         </div>
       </div>
+
+      <Footer />
     </PageBackground>
   );
 };

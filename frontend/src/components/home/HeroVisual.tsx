@@ -170,12 +170,12 @@ const ShoppingCartOutline: React.FC<{ className?: string }> = ({ className = "" 
 export const HeroVisual: React.FC = () => {
   return (
     <div className="relative flex w-full items-center justify-center select-none">
-      {/* ── Hand-Drawn Annotations Around the Showcase ── */}
-      <div className="pointer-events-none absolute -top-7 left-4 sm:left-10 z-20">
+      {/* ── Hand-Drawn Annotations Around the Showcase (Desktop only to prevent mobile overflow) ── */}
+      <div className="pointer-events-none absolute -top-7 left-4 sm:left-10 z-20 hidden sm:block">
         <HandDrawnAnnotation text="Better Choices" color="#0D0B1E" arrowDirection="up-right" />
       </div>
 
-      <div className="pointer-events-none absolute -top-9 right-0 sm:right-4 z-20">
+      <div className="pointer-events-none absolute -top-9 right-0 sm:right-4 z-20 hidden sm:block">
         <HandDrawnAnnotation text="Compare Prices Save More" color="#0D0B1E" arrowDirection="down-right" />
       </div>
 
@@ -185,14 +185,15 @@ export const HeroVisual: React.FC = () => {
 
       {/* ── Layered Glow Aura Behind Mascot ── */}
       <div
-        className="pointer-events-none absolute h-72 w-72 sm:h-80 sm:w-80 rounded-full blur-3xl opacity-35"
+        className="pointer-events-none absolute h-48 w-48 sm:h-80 sm:w-80 rounded-full blur-3xl opacity-35"
         style={{
           background: "radial-gradient(circle, #A855F7 0%, #7C3AED 40%, #FB923C 85%, transparent 100%)",
         }}
       />
 
       {/* ── Futuristic Concentric Orbital Rings ── */}
-      <div className="relative flex h-80 w-80 sm:h-96 sm:w-96 items-center justify-center">
+      {/* Mobile: 230px (~28% reduction from 320px). Desktop: 384px (sm:h-96 sm:w-96) unchanged */}
+      <div className="relative flex h-[230px] w-[230px] sm:h-96 sm:w-96 items-center justify-center">
 
         {/* Outer Orbit Track */}
         <div
@@ -205,7 +206,7 @@ export const HeroVisual: React.FC = () => {
 
         {/* Middle Orbit Glow Ring */}
         <div
-          className="pointer-events-none absolute inset-6 rounded-full border border-purple-200/60"
+          className="pointer-events-none absolute inset-4 sm:inset-6 rounded-full border border-purple-200/60"
           style={{
             background: "radial-gradient(circle, rgba(237, 233, 254, 0.25) 0%, transparent 70%)",
           }}
@@ -213,7 +214,7 @@ export const HeroVisual: React.FC = () => {
 
         {/* Inner Technical Arc Ring */}
         <svg
-          className="pointer-events-none absolute inset-10 h-[calc(100%-5rem)] w-[calc(100%-5rem)] opacity-25"
+          className="pointer-events-none absolute inset-6 sm:inset-10 h-[calc(100%-3rem)] sm:h-[calc(100%-5rem)] w-[calc(100%-3rem)] sm:w-[calc(100%-5rem)] opacity-25"
           viewBox="0 0 200 200"
           fill="none"
         >
@@ -227,11 +228,14 @@ export const HeroVisual: React.FC = () => {
         </svg>
 
         {/* ── Center: Official 3D ShopMind AI Mascot ── */}
+        {/* Mobile: 128px (~33% reduction from 192px). Desktop: 224px (sm:h-56 sm:w-56) unchanged */}
         <div className="relative z-10 flex items-center justify-center">
           <img
+            id="hero-mascot-image"
+            data-hero-mascot="true"
             src="/shopmind-mascot-transparent.png"
-            alt="ShopMind AI Mascot"
-            className="h-48 w-48 sm:h-56 sm:w-56 object-contain filter drop-shadow-2xl transition-transform duration-700 hover:scale-105"
+            alt="ShopMind AI Hero Mascot"
+            className="h-32 w-32 sm:h-56 sm:w-56 object-contain filter drop-shadow-2xl transition-transform duration-700 hover:scale-105"
             style={{
               filter: "drop-shadow(0 14px 28px rgba(124, 58, 237, 0.35)) drop-shadow(0 2px 8px rgba(0, 0, 0, 0.08))",
             }}
@@ -241,37 +245,37 @@ export const HeroVisual: React.FC = () => {
         {/* ── DECORATIVE PRODUCT OUTLINES AROUND MASCOT ── */}
 
         {/* 1. Headphones (Top Center-Left) */}
-        <div className="pointer-events-none absolute -top-3 left-8 animate-bounce-slow" style={{ animationDelay: "0s" }}>
+        <div className="pointer-events-none absolute -top-2 left-2 sm:-top-3 sm:left-8 scale-75 sm:scale-100 origin-center animate-bounce-slow" style={{ animationDelay: "0s" }}>
           <HeadphonesOutline />
         </div>
 
         {/* 2. Laptop (Top Right) */}
-        <div className="pointer-events-none absolute top-2 -right-2 animate-bounce-slow" style={{ animationDelay: "0.8s" }}>
+        <div className="pointer-events-none absolute -top-1 right-1 sm:top-2 sm:-right-2 scale-75 sm:scale-100 origin-center animate-bounce-slow" style={{ animationDelay: "0.8s" }}>
           <LaptopOutline />
         </div>
 
-        {/* 3. Smartphone (Middle Right) */}
-        <div className="pointer-events-none absolute top-32 -right-5 animate-bounce-slow" style={{ animationDelay: "1.6s" }}>
+        {/* 3. Smartphone (Middle Right — Desktop only to prevent narrow-screen overflow) */}
+        <div className="pointer-events-none absolute top-32 -right-5 hidden sm:block animate-bounce-slow" style={{ animationDelay: "1.6s" }}>
           <SmartphoneOutline />
         </div>
 
         {/* 4. Smartwatch (Bottom Right) */}
-        <div className="pointer-events-none absolute bottom-6 right-2 animate-bounce-slow" style={{ animationDelay: "2.2s" }}>
+        <div className="pointer-events-none absolute bottom-1 right-2 sm:bottom-6 sm:right-2 scale-75 sm:scale-100 origin-center animate-bounce-slow" style={{ animationDelay: "2.2s" }}>
           <SmartwatchOutline />
         </div>
 
-        {/* 5. Camera (Bottom Center-Right) */}
-        <div className="pointer-events-none absolute -bottom-4 right-20 animate-bounce-slow" style={{ animationDelay: "1.1s" }}>
+        {/* 5. Camera (Bottom Center-Right — Desktop only) */}
+        <div className="pointer-events-none absolute -bottom-4 right-20 hidden sm:block animate-bounce-slow" style={{ animationDelay: "1.1s" }}>
           <CameraOutline />
         </div>
 
         {/* 6. Sneaker (Bottom Left) */}
-        <div className="pointer-events-none absolute bottom-5 left-2 animate-bounce-slow" style={{ animationDelay: "1.9s" }}>
+        <div className="pointer-events-none absolute bottom-1 left-2 sm:bottom-5 sm:left-2 scale-75 sm:scale-100 origin-center animate-bounce-slow" style={{ animationDelay: "1.9s" }}>
           <SneakerOutline />
         </div>
 
-        {/* 7. Shopping Cart Badge (Lower-Left Orbit) */}
-        <div className="pointer-events-none absolute -bottom-3 left-24 animate-bounce-slow" style={{ animationDelay: "0.4s" }}>
+        {/* 7. Shopping Cart Badge (Lower Orbit) */}
+        <div className="pointer-events-none absolute -bottom-2.5 left-1/2 -translate-x-1/2 sm:translate-x-0 sm:left-24 sm:-bottom-3 scale-75 sm:scale-100 origin-center animate-bounce-slow" style={{ animationDelay: "0.4s" }}>
           <ShoppingCartOutline />
         </div>
 

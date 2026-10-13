@@ -65,18 +65,20 @@ export const streamChat = async (
       body: JSON.stringify({ message, history }),
     });
   } catch (err) {
-    // If the active URL fails with a connection error, try alternate port
-    const altBaseUrl = currentBaseUrl.includes("8001")
-      ? currentBaseUrl.replace("8001", "8000")
-      : currentBaseUrl.includes("8000")
-        ? currentBaseUrl.replace("8000", "8001")
-        : "http://127.0.0.1:8001/api";
+    // In development only, try alternative local port (8000 <-> 8001)
+    if (!import.meta.env.PROD && (currentBaseUrl.includes("8001") || currentBaseUrl.includes("8000"))) {
+      const altBaseUrl = currentBaseUrl.includes("8001")
+        ? currentBaseUrl.replace("8001", "8000")
+        : currentBaseUrl.replace("8000", "8001");
 
-    response = await fetch(`${altBaseUrl}/agent/chat/stream`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, history }),
-    });
+      response = await fetch(`${altBaseUrl}/agent/chat/stream`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message, history }),
+      });
+    } else {
+      throw err;
+    }
   }
 
 

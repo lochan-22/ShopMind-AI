@@ -18,7 +18,7 @@ const CATEGORIES: CategoryItem[] = [
   {
     slug: "electronics",
     name: "Electronics",
-    subCount: "18+ categories",
+    subCount: "17 categories",
     badgeBg: "linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%)",
     badgeBorder: "#C4B5FD",
     accentColor: "#7C3AED",
@@ -28,7 +28,7 @@ const CATEGORIES: CategoryItem[] = [
   {
     slug: "fashion",
     name: "Fashion",
-    subCount: "12+ categories",
+    subCount: "12 categories",
     badgeBg: "linear-gradient(135deg, #FFF7ED 0%, #FED7AA 100%)",
     badgeBorder: "#FDBA74",
     accentColor: "#EA580C",
@@ -38,7 +38,7 @@ const CATEGORIES: CategoryItem[] = [
   {
     slug: "home-kitchen",
     name: "Home & Living",
-    subCount: "14+ categories",
+    subCount: "11 categories",
     badgeBg: "linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)",
     badgeBorder: "#FCD34D",
     accentColor: "#D97706",
@@ -48,7 +48,7 @@ const CATEGORIES: CategoryItem[] = [
   {
     slug: "footwear",
     name: "Footwear",
-    subCount: "10+ categories",
+    subCount: "8 categories",
     badgeBg: "linear-gradient(135deg, #EFF6FF 0%, #BFDBFE 100%)",
     badgeBorder: "#93C5FD",
     accentColor: "#2563EB",
@@ -56,9 +56,9 @@ const CATEGORIES: CategoryItem[] = [
     fallbackEmoji: "👟",
   },
   {
-    slug: "beauty-personal-care",
+    slug: "beauty",
     name: "Beauty & Personal Care",
-    subCount: "10+ categories",
+    subCount: "7 categories",
     badgeBg: "linear-gradient(135deg, #FDF2F8 0%, #FBCFE8 100%)",
     badgeBorder: "#F472B6",
     accentColor: "#DB2777",
@@ -66,9 +66,9 @@ const CATEGORIES: CategoryItem[] = [
     fallbackEmoji: "💄",
   },
   {
-    slug: "sports-fitness",
+    slug: "sports",
     name: "Sports & Fitness",
-    subCount: "8+ categories",
+    subCount: "8 categories",
     badgeBg: "linear-gradient(135deg, #F0FDF4 0%, #BBF7D0 100%)",
     badgeBorder: "#86EFAC",
     accentColor: "#16A34A",
@@ -78,7 +78,7 @@ const CATEGORIES: CategoryItem[] = [
   {
     slug: "automotive",
     name: "Automotive",
-    subCount: "6+ categories",
+    subCount: "6 categories",
     badgeBg: "linear-gradient(135deg, #FEF2F2 0%, #FECACA 100%)",
     badgeBorder: "#FCA5A5",
     accentColor: "#DC2626",
@@ -86,9 +86,9 @@ const CATEGORIES: CategoryItem[] = [
     fallbackEmoji: "🚗",
   },
   {
-    slug: "books-education",
+    slug: "books",
     name: "Books & Education",
-    subCount: "5+ categories",
+    subCount: "5 categories",
     badgeBg: "linear-gradient(135deg, #FFFBEB 0%, #FDE68A 100%)",
     badgeBorder: "#FCD34D",
     accentColor: "#B45309",
@@ -98,7 +98,7 @@ const CATEGORIES: CategoryItem[] = [
   {
     slug: "baby-kids",
     name: "Baby & Kids",
-    subCount: "6+ categories",
+    subCount: "6 categories",
     badgeBg: "linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%)",
     badgeBorder: "#FED7AA",
     accentColor: "#EA580C",
@@ -106,9 +106,9 @@ const CATEGORIES: CategoryItem[] = [
     fallbackEmoji: "🧸",
   },
   {
-    slug: "pet-supplies",
+    slug: "pets",
     name: "Pet Supplies",
-    subCount: "5+ categories",
+    subCount: "5 categories",
     badgeBg: "linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)",
     badgeBorder: "#BBF7D0",
     accentColor: "#15803D",
@@ -118,7 +118,7 @@ const CATEGORIES: CategoryItem[] = [
   {
     slug: "smart-tech",
     name: "Smart Tech & Toys",
-    subCount: "4+ categories",
+    subCount: "6 categories",
     badgeBg: "linear-gradient(135deg, #F5F3FF 0%, #DDD6FE 100%)",
     badgeBorder: "#C4B5FD",
     accentColor: "#7C3AED",
@@ -132,8 +132,21 @@ const ShopByCategory: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="w-full py-12">
-      <div ref={ref} className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section
+      className="relative w-full py-14 overflow-hidden border-b border-[#E8E2D9]/70"
+      style={{ backgroundColor: "#F8F4EE" }}
+    >
+      {/* Subtle dotted background grid */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-20 select-none"
+        style={{
+          backgroundImage: "radial-gradient(circle, rgba(124, 58, 237, 0.10) 1.2px, transparent 1.2px)",
+          backgroundSize: "28px 28px",
+        }}
+        aria-hidden="true"
+      />
+
+      <div ref={ref} className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -154,24 +167,24 @@ const ShopByCategory: React.FC = () => {
           </button>
         </div>
 
-        {/* Categories Horizontal Carousel / Responsive Grid */}
-        <div className="mt-6 flex gap-4 overflow-x-auto pb-4 pt-1 no-scrollbar sm:grid sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-11 sm:overflow-visible">
+        {/* Categories Responsive Grid — 2-col mobile / 3-col tablet / 5-col desktop */}
+        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
           {CATEGORIES.map((cat, idx) => (
             <button
               key={cat.slug}
               type="button"
-              onClick={() => navigate(`/categories/${cat.slug === "footwear" || cat.slug === "smart-tech" ? "electronics" : cat.slug}`)}
+              onClick={() => navigate(`/categories/${cat.slug}`)}
               style={{
                 transitionDelay: inView ? `${idx * 25}ms` : "0ms",
                 boxShadow: "0 2px 8px rgba(13,11,30,0.04)",
               }}
-              className={`group relative flex min-w-[110px] flex-1 flex-col items-center rounded-2xl border border-[#E8E2D9] bg-white p-2.5 text-center transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg ${
+              className={`group relative flex flex-col items-center rounded-2xl border border-[#E8E2D9] bg-white p-3 text-center transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg ${
                 inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
               }`}
             >
               {/* Product preview box */}
               <div
-                className="relative flex h-20 w-full items-center justify-center overflow-hidden rounded-xl transition-transform duration-300 group-hover:scale-105"
+                className="relative flex h-28 sm:h-32 w-full items-center justify-center overflow-hidden rounded-xl transition-transform duration-300 group-hover:scale-105"
                 style={{ background: cat.badgeBg }}
               >
                 <img
@@ -191,19 +204,19 @@ const ShopByCategory: React.FC = () => {
 
               {/* Title & Count */}
               <div className="mt-2.5 flex w-full flex-col items-center">
-                <span className="text-[11px] font-bold leading-tight text-[#0D0B1E] line-clamp-1 group-hover:text-[#7C3AED] transition-colors">
+                <span className="text-[13px] sm:text-[14px] font-bold leading-tight text-[#0D0B1E] line-clamp-2 group-hover:text-[#7C3AED] transition-colors">
                   {cat.name}
                 </span>
-                <span className="mt-0.5 text-[9px] text-[#A89F95]">
+                <span className="mt-0.5 text-[11px] text-[#A89F95]">
                   {cat.subCount}
                 </span>
               </div>
 
               {/* Mini Plus Button */}
               <div
-                className="mt-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#EDE9FE] text-[#7C3AED] transition-all duration-200 group-hover:bg-[#7C3AED] group-hover:text-white"
+                className="mt-2 flex h-5 w-5 items-center justify-center rounded-full bg-[#EDE9FE] text-[#7C3AED] transition-all duration-200 group-hover:bg-[#7C3AED] group-hover:text-white"
               >
-                <Plus className="h-2.5 w-2.5" strokeWidth={3} />
+                <Plus className="h-3 w-3" strokeWidth={3} />
               </div>
             </button>
           ))}

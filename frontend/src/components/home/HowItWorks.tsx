@@ -71,7 +71,10 @@ const HowItWorks: React.FC = () => {
   const { ref, inView } = useInView<HTMLDivElement>();
 
   return (
-    <section className="relative w-full py-20 overflow-hidden">
+    <section
+      className="relative w-full py-20 overflow-hidden border-b border-[#E8E2D9]/70"
+      style={{ background: "linear-gradient(180deg, #F6F3FC 0%, #FAF7F2 100%)" }}
+    >
       {/* ── Background Atmosphere & Dotted Grid ── */}
       <div
         className="pointer-events-none absolute inset-0 opacity-25 select-none"

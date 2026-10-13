@@ -2,8 +2,9 @@ import React, { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AgentProvider } from "../agent/context/AgentProvider";
 import { AgentPanel } from "../agent/components/AgentPanel";
-import { FloatingAgentButton } from "../agent/components/FloatingAgentButton";
+import GlobalVoiceButton from "../components/common/GlobalVoiceButton";
 import ShopMindLogo from "../components/common/ShopMindLogo";
+import ScrollRestoration from "../components/common/ScrollRestoration";
 
 /* ── Lazy page imports ── */
 const Home             = lazy(() => import("../pages/Home"));
@@ -14,7 +15,11 @@ const SubCategories    = lazy(() => import("../pages/SubCategories"));
 const CategoryProducts = lazy(() => import("../pages/CategoryProducts"));
 const ProductDetails   = lazy(() => import("../pages/ProductDetails"));
 const Cart             = lazy(() => import("../pages/Cart"));
+const Deals            = lazy(() => import("../pages/Deals"));
+const About            = lazy(() => import("../pages/About"));
 const AgentDashboard   = lazy(() => import("../pages/AgentDashboard"));
+const PrivacyPolicy    = lazy(() => import("../pages/PrivacyPolicy"));
+const TermsOfService   = lazy(() => import("../pages/TermsOfService"));
 const NotFound         = lazy(() => import("../pages/NotFound"));
 
 /* ── Page loading fallback featuring the warm cream background & mascot ── */
@@ -48,6 +53,7 @@ const PageLoader: React.FC = () => (
 /* ── Route definitions ── */
 const AppRoutes: React.FC = () => (
   <BrowserRouter>
+    <ScrollRestoration />
     <AgentProvider>
       <Suspense fallback={<PageLoader />}>
         <Routes>
@@ -62,13 +68,19 @@ const AppRoutes: React.FC = () => (
           <Route path="/categories/:mainCategory" element={<SubCategories />} />
           <Route path="/categories/:mainCategory/:subCategory" element={<CategoryProducts />} />
 
+          <Route path="/deals"       element={<Deals />} />
+          <Route path="/about"       element={<About />} />
           <Route path="/cart"        element={<Cart />} />
           <Route path="/agent"       element={<AgentDashboard />} />
+          <Route path="/privacy"     element={<PrivacyPolicy />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms"       element={<TermsOfService />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
           <Route path="*"            element={<NotFound />} />
         </Routes>
       </Suspense>
       <AgentPanel />
-      <FloatingAgentButton />
+      <GlobalVoiceButton />
     </AgentProvider>
   </BrowserRouter>
 );

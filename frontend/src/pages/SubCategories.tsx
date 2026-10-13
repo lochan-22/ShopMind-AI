@@ -2,7 +2,9 @@ import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, ChevronRight, AlertTriangle } from "lucide-react";
 import Navbar from "../components/common/Navbar";
+import Footer from "../components/common/Footer";
 import PageBackground from "../components/common/PageBackground";
+import SubcategoryIcon from "../components/category/SubcategoryIcon";
 import { findMainCategory } from "../data/categoryData";
 
 /**
@@ -134,53 +136,81 @@ const SubCategories: React.FC = () => {
               </defs>
             </svg>
 
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-              {category.subcategories.map((sub) => (
+            {category.subcategories.length === 0 ? (
+              <div
+                className="flex flex-col items-center justify-center rounded-3xl border py-16 text-center"
+                style={{
+                  background: "linear-gradient(135deg, #FFFFFF, #F8F5FF)",
+                  borderColor: "#E8E2D9",
+                }}
+              >
+                <span className="text-4xl mb-3">📂</span>
+                <p className="text-base font-semibold" style={{ color: "#0D0B1E" }}>
+                  No subcategories currently listed for {category.label}
+                </p>
+                <p className="mt-1 text-sm text-[#7A7068]">
+                  Check back soon or explore our other live shopping departments.
+                </p>
                 <button
-                  key={sub.slug}
                   type="button"
-                  onClick={() => navigate(`/categories/${category.slug}/${sub.slug}`)}
-                  className="group flex flex-col items-start gap-2 rounded-2xl border p-4 text-left transition-all duration-200 hover:-translate-y-1"
-                  style={{
-                    background: "linear-gradient(135deg, #FFFFFF, #FDFAF7)",
-                    border: "1.5px solid #E8E2D9",
-                    boxShadow: "0 1px 4px rgba(13,11,30,0.04)",
-                  }}
-                  onMouseEnter={(e) => {
-                    const el = e.currentTarget as HTMLButtonElement;
-                    el.style.borderColor = "#C4B5FD";
-                    el.style.boxShadow = "0 6px 20px rgba(124,58,237,0.12)";
-                  }}
-                  onMouseLeave={(e) => {
-                    const el = e.currentTarget as HTMLButtonElement;
-                    el.style.borderColor = "#E8E2D9";
-                    el.style.boxShadow = "0 1px 4px rgba(13,11,30,0.04)";
-                  }}
+                  onClick={() => navigate("/categories")}
+                  className="mt-5 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-px"
+                  style={{ background: "linear-gradient(135deg, #7C3AED, #6D28D9)" }}
                 >
-                  <span
-                    className="text-[10px] font-bold uppercase tracking-widest"
-                    style={{ color: "#A89F95" }}
-                  >
-                    Browse
-                  </span>
-                  <h2
-                    className="text-sm font-semibold leading-tight transition-colors group-hover:text-purple-700"
-                    style={{ color: "#0D0B1E" }}
-                  >
-                    {sub.label}
-                  </h2>
-                  <span
-                    className="mt-auto text-[11px] font-medium transition-colors group-hover:text-purple-600"
-                    style={{ color: "#A89F95" }}
-                  >
-                    Live products →
-                  </span>
+                  Browse All Categories
                 </button>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                {category.subcategories.map((sub) => (
+                  <button
+                    key={sub.slug}
+                    type="button"
+                    onClick={() => navigate(`/categories/${category.slug}/${sub.slug}`)}
+                    className="group flex flex-col items-start gap-2.5 rounded-2xl border p-4 text-left transition-all duration-200 hover:-translate-y-1"
+                    style={{
+                      background: "linear-gradient(135deg, #FFFFFF, #FDFAF7)",
+                      border: "1.5px solid #E8E2D9",
+                      boxShadow: "0 1px 4px rgba(13,11,30,0.04)",
+                    }}
+                    onMouseEnter={(e) => {
+                      const el = e.currentTarget as HTMLButtonElement;
+                      el.style.borderColor = "#C4B5FD";
+                      el.style.boxShadow = "0 6px 20px rgba(124,58,237,0.12)";
+                    }}
+                    onMouseLeave={(e) => {
+                      const el = e.currentTarget as HTMLButtonElement;
+                      el.style.borderColor = "#E8E2D9";
+                      el.style.boxShadow = "0 1px 4px rgba(13,11,30,0.04)";
+                    }}
+                  >
+                    {/* Visual icon inside light-purple circular/rounded container */}
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-[#7C3AED] transition-transform duration-200 group-hover:scale-105 group-hover:bg-purple-100">
+                      <SubcategoryIcon slug={sub.slug} categorySlug={category.slug} className="h-5 w-5" />
+                    </div>
+
+                    <h2
+                      className="text-sm font-semibold leading-tight transition-colors group-hover:text-purple-700"
+                      style={{ color: "#0D0B1E" }}
+                    >
+                      {sub.label}
+                    </h2>
+
+                    <span
+                      className="mt-auto text-[11px] font-medium transition-colors group-hover:text-purple-600"
+                      style={{ color: "#A89F95" }}
+                    >
+                      Live products →
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </>
         )}
       </div>
+
+      <Footer />
     </PageBackground>
   );
 };

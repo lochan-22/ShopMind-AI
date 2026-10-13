@@ -52,13 +52,13 @@ const BENEFITS: BenefitItem[] = [
 
 export const FeatureStrip: React.FC = () => {
   return (
-    <section className="relative w-full border-t border-b border-[#E8E2D9] py-8 overflow-hidden">
+    <section className="relative w-full border-b border-[#E8E2D9] py-8 overflow-hidden bg-white">
       {/* ── Background Atmosphere & Technical Details ── */}
       <div
         className="pointer-events-none absolute inset-0 opacity-40 select-none"
         style={{
-          backgroundColor: "#FAF7F2",
-          backgroundImage: "radial-gradient(circle, rgba(124, 58, 237, 0.12) 1.2px, transparent 1.2px)",
+          backgroundColor: "#FFFFFF",
+          backgroundImage: "radial-gradient(circle, rgba(124, 58, 237, 0.08) 1.2px, transparent 1.2px)",
           backgroundSize: "24px 24px",
         }}
         aria-hidden="true"

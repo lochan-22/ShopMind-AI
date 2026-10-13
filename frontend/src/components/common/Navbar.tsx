@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { Search } from "lucide-react";
 import ShopMindLogo from "./ShopMindLogo";
 
 const NAV_ITEMS = [
   { label: "Home", href: "/" },
   { label: "Categories", href: "/categories" },
-  { label: "Deals", href: "/search?q=deals" },
+  { label: "Deals", href: "/deals" },
   { label: "Compare", href: "/compare" },
-  { label: "About", href: "/#how-it-works" },
+  { label: "About", href: "/about" },
 ];
 
 const Navbar: React.FC = () => {
@@ -15,7 +16,19 @@ const Navbar: React.FC = () => {
   const routerNavigate = useNavigate();
   const location = useLocation();
 
-  const navigate = (href: string) => {
+  const handleNav = (href: string) => {
+    if (href === "search-focus") {
+      if (location.pathname === "/") {
+        const el = document.getElementById("hero-search-input");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.focus();
+          return;
+        }
+      }
+      routerNavigate("/?focus=search");
+      return;
+    }
     if (href.startsWith("/#")) {
       const id = href.replace("/#", "");
       const el = document.getElementById(id);
@@ -29,7 +42,7 @@ const Navbar: React.FC = () => {
 
   const isItemActive = (href: string) => {
     if (href === "/") {
-      return location.pathname === "/" && !location.hash;
+      return location.pathname === "/" && !location.hash && !location.search.includes("focus=search");
     }
     if (href.startsWith("/#")) {
       return location.hash === href.replace("/", "");
@@ -46,7 +59,7 @@ const Navbar: React.FC = () => {
       <div className="mx-auto max-w-7xl">
         {/* Pill-like Glass Navbar Container */}
         <div
-          className="flex h-14 sm:h-16 items-center justify-between rounded-full border px-4 sm:px-6 shadow-sm transition-all"
+          className="flex h-14 sm:h-16 items-center justify-between rounded-full border px-4 sm:px-6 shadow-xs transition-all"
           style={{
             background: "rgba(255, 255, 255, 0.85)",
             backdropFilter: "blur(20px) saturate(180%)",
@@ -59,7 +72,7 @@ const Navbar: React.FC = () => {
           <div className="flex items-center flex-shrink-0">
             <button
               type="button"
-              onClick={() => navigate("/")}
+              onClick={() => handleNav("/")}
               className="flex items-center gap-2 select-none flex-shrink-0 cursor-pointer focus:outline-none transition-transform hover:opacity-95"
               aria-label="ShopMind AI home"
             >
@@ -67,7 +80,7 @@ const Navbar: React.FC = () => {
             </button>
           </div>
 
-          {/* CENTER: Navigation Links with Purple Active State */}
+          {/* CENTER: Navigation Links (Home | Categories | Deals | Compare | About | Search icon) */}
           <nav className="hidden md:flex items-center gap-1 sm:gap-1.5" role="navigation">
             {NAV_ITEMS.map((item) => {
               const active = isItemActive(item.href);
@@ -75,7 +88,7 @@ const Navbar: React.FC = () => {
                 <button
                   key={item.label}
                   type="button"
-                  onClick={() => navigate(item.href)}
+                  onClick={() => handleNav(item.href)}
                   className={`rounded-full px-3.5 py-1.5 text-[13.5px] font-medium transition-all duration-150 ${
                     active
                       ? "text-[#7C3AED] font-semibold bg-purple-50"
@@ -86,19 +99,30 @@ const Navbar: React.FC = () => {
                 </button>
               );
             })}
+
+            {/* Recognizable Search Icon Button immediately after About and before Cart */}
+            <button
+              type="button"
+              onClick={() => handleNav("search-focus")}
+              aria-label="Search products"
+              title="Search products"
+              className="group relative flex h-8.5 w-8.5 items-center justify-center rounded-full text-[#5A5248] transition-all duration-150 hover:bg-purple-50 hover:text-[#7C3AED] focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+            >
+              <Search className="h-4 w-4 transition-transform duration-150 group-hover:scale-110" />
+            </button>
           </nav>
 
-          {/* RIGHT: Actions (Cart & Sign In Pill Button) */}
-          <div className="hidden md:flex items-center gap-3">
-            {/* Cart Button */}
+          {/* RIGHT: Actions (Cart Button) */}
+          <div className="hidden md:flex items-center gap-2">
             <button
+              type="button"
               aria-label="Cart"
-              onClick={() => navigate("/cart")}
-              className="relative flex h-9 w-9 items-center justify-center rounded-full text-[#5A5248] transition-colors hover:bg-purple-50 hover:text-[#7C3AED]"
+              onClick={() => routerNavigate("/cart")}
+              className="relative flex h-9.5 px-3.5 items-center gap-2 rounded-full border border-[#E8E2D9] bg-white text-[#5A5248] shadow-xs transition-all hover:border-purple-300 hover:bg-purple-50 hover:text-[#7C3AED]"
             >
               <svg
-                width="18"
-                height="18"
+                width="17"
+                height="17"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -110,38 +134,38 @@ const Navbar: React.FC = () => {
                 <path d="M3 6h18" />
                 <path d="M16 10a4 4 0 0 1-8 0" />
               </svg>
-            </button>
-
-            {/* Sign In Pill Button */}
-            <button
-              type="button"
-              className="h-9 rounded-full px-5 text-[13px] font-bold text-white shadow-md transition-all duration-150 hover:-translate-y-0.5 hover:shadow-lg"
-              style={{
-                background: "linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%)",
-                boxShadow: "0 3px 12px rgba(124, 58, 237, 0.28)",
-              }}
-            >
-              Sign In
+              <span className="text-[13px] font-semibold">Cart</span>
             </button>
           </div>
 
-          {/* Mobile Hamburger Button */}
-          <button
-            className="flex md:hidden h-9 w-9 items-center justify-center rounded-full text-[#5A5248] transition hover:bg-purple-50"
-            onClick={() => setMobileOpen((v) => !v)}
-            aria-label="Toggle menu"
-            aria-expanded={mobileOpen}
-          >
-            {mobileOpen ? (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                <path d="M18 6 6 18M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                <path d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            )}
-          </button>
+          {/* Mobile Right: Search quick button & Hamburger Menu Button */}
+          <div className="flex md:hidden items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => handleNav("search-focus")}
+              aria-label="Search products"
+              title="Search products"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-[#5A5248] transition hover:bg-purple-50 hover:text-[#7C3AED]"
+            >
+              <Search className="h-4.5 w-4.5" />
+            </button>
+            <button
+              className="flex h-9 w-9 items-center justify-center rounded-full text-[#5A5248] transition hover:bg-purple-50"
+              onClick={() => setMobileOpen((v) => !v)}
+              aria-label="Toggle menu"
+              aria-expanded={mobileOpen}
+            >
+              {mobileOpen ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                  <path d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Dropdown Menu Card */}
@@ -161,7 +185,7 @@ const Navbar: React.FC = () => {
                   type="button"
                   onClick={() => {
                     setMobileOpen(false);
-                    navigate(item.href);
+                    handleNav(item.href);
                   }}
                   className={`rounded-xl px-4 py-2.5 text-left text-[14px] font-medium transition-all ${
                     active
@@ -173,28 +197,35 @@ const Navbar: React.FC = () => {
                 </button>
               );
             })}
-            <div className="mt-2 pt-2 border-t border-[#E8E2D9] flex gap-2">
+
+            {/* Mobile Search Item */}
+            <button
+              type="button"
+              onClick={() => {
+                setMobileOpen(false);
+                handleNav("search-focus");
+              }}
+              className="flex items-center gap-2.5 rounded-xl px-4 py-2.5 text-left text-[14px] font-medium text-[#5A5248] transition-all hover:bg-purple-50 hover:text-[#7C3AED]"
+            >
+              <Search className="h-4 w-4 text-[#7C3AED]" />
+              <span>Search products</span>
+            </button>
+
+            <div className="mt-2 pt-2 border-t border-[#E8E2D9]">
               <button
                 type="button"
-                className="flex-1 h-10 rounded-full text-[13.5px] font-bold text-white shadow-md"
-                style={{ background: "linear-gradient(135deg, #7C3AED, #6D28D9)" }}
-              >
-                Sign In
-              </button>
-              <button
-                type="button"
-                aria-label="Cart"
                 onClick={() => {
                   setMobileOpen(false);
-                  navigate("/cart");
+                  routerNavigate("/cart");
                 }}
-                className="h-10 w-10 flex items-center justify-center rounded-full border border-[#E8E2D9] text-[#7A7068]"
+                className="w-full h-10 flex items-center justify-center gap-2 rounded-xl border border-[#E8E2D9] bg-white text-[#5A5248] text-[13.5px] font-semibold transition hover:bg-purple-50 hover:text-[#7C3AED]"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
                   <path d="M3 6h18" />
                   <path d="M16 10a4 4 0 0 1-8 0" />
                 </svg>
+                <span>View Cart</span>
               </button>
             </div>
           </div>

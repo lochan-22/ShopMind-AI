@@ -33,7 +33,10 @@ const FutureFeatures: React.FC = () => {
   const { ref, inView } = useInView<HTMLDivElement>();
 
   return (
-    <section className="relative w-full py-20 overflow-hidden">
+    <section
+      className="relative w-full py-20 overflow-hidden border-b border-[#E8E2D9]/70"
+      style={{ backgroundColor: "#F8F5F0" }}
+    >
       {/* ── Background Dotted Grid & Atmospheric Glow ── */}
       <div
         className="pointer-events-none absolute inset-0 opacity-20 select-none"

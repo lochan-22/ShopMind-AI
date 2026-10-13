@@ -25,12 +25,22 @@ class OpenRouterProvider:
 
     base_url = "https://openrouter.ai/api/v1"
 
-    def __init__(self, api_key: str | None = None, model: str | None = None) -> None:
-        self.api_key = api_key or os.getenv("OPENROUTER_API_KEY", "")
-        self.model = model or os.getenv("OPENROUTER_MODEL", "")
+    def __init__(
+        self,
+        api_key: str | None = None,
+        model: str | None = None,
+        timeout: float | None = None,
+    ) -> None:
+        self.api_key = (api_key or settings.openrouter_api_key or os.getenv("OPENROUTER_API_KEY", "")).strip()
+        self.model = (model or settings.openrouter_model or os.getenv("OPENROUTER_MODEL", "")).strip()
+        self.timeout = (
+            timeout
+            if timeout is not None
+            else getattr(settings, "openrouter_timeout_seconds", 25.0)
+        )
 
     def is_configured(self) -> bool:
-        return bool(self.api_key.strip() and self.model.strip())
+        return bool(self.api_key and self.model)
 
     def chat(self, messages: list[ChatMessage]) -> str:
         """Send messages to OpenRouter and return the completed response text."""
@@ -42,13 +52,21 @@ class OpenRouterProvider:
             raise ValueError("messages must contain at least one message")
 
         try:
-            client = OpenAI(api_key=self.api_key, base_url=self.base_url)
+            client = OpenAI(
+                api_key=self.api_key,
+                base_url=self.base_url,
+                timeout=self.timeout,
+                default_headers={
+                    "HTTP-Referer": settings.openrouter_site_url,
+                    "X-Title": settings.openrouter_app_name,
+                },
+            )
             response = client.chat.completions.create(
                 model=self.model,
                 messages=cast(list[dict[str, str]], messages),
             )
         except Exception as error:
-            raise OpenRouterError("Unable to get a response from OpenRouter.") from error
+            raise OpenRouterError(f"Unable to get a response from OpenRouter: {error}") from error
 
         content = response.choices[0].message.content if response.choices else None
         if not content:

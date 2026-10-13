@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, ChevronRight, AlertTriangle, Loader2, Sparkles } from "lucide-react";
 import Navbar from "../components/common/Navbar";
+import Footer from "../components/common/Footer";
 import PageBackground from "../components/common/PageBackground";
 import { ProductCard } from "../components/product/ProductCard";
 import { searchProducts, type Product } from "../services/productService";
@@ -204,7 +205,7 @@ const CategoryProducts: React.FC = () => {
                 Google Shopping · India
               </span>
             </div>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 sm:gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {products.map((product) => (
                 <ProductCard
                   key={product.product_id ?? product.id}
@@ -216,6 +217,8 @@ const CategoryProducts: React.FC = () => {
           </>
         )}
       </div>
+
+      <Footer />
     </PageBackground>
   );
 };

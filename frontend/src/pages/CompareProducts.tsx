@@ -2,10 +2,13 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { AlertTriangle, ArrowLeft, GitCompare, Loader2, Search, CheckCircle2 } from "lucide-react";
 import Navbar from "../components/common/Navbar";
+import Footer from "../components/common/Footer";
 import PageBackground from "../components/common/PageBackground";
 import ShopMindText from "../components/common/ShopMindText";
+import axios from "axios";
 import {
   compareProducts,
+  getProductComparisonId,
   searchProducts,
   type ComparisonProduct,
   type Product,
@@ -228,31 +231,49 @@ const CompareProducts: React.FC = () => {
     : [];
 
   const selectionMode = Boolean(productAId) && !productBId;
-  const currentResultCandidates = currentSearchResults.filter(
-    (product) => product.product_id && product.product_id !== productAId,
-  );
+  const currentResultCandidates = currentSearchResults.filter((product) => {
+    const pid = getProductComparisonId(product);
+    return Boolean(pid && pid !== productAId);
+  });
 
   const selectProductB = (product: Product) => {
-    if (!product.product_id || product.product_id === productAId) return;
+    const pid = getProductComparisonId(product);
+    if (!pid || pid === productAId) return;
     navigate(
-      `/compare?product_a=${encodeURIComponent(productAId)}&product_b=${encodeURIComponent(product.product_id)}`,
+      `/compare?product_a=${encodeURIComponent(productAId)}&product_b=${encodeURIComponent(pid)}`,
+      { state: location.state }
     );
   };
 
   useEffect(() => {
     if (!productAId || !productBId || productAId === productBId) return;
+    let isCancelled = false;
     const loadComparison = async () => {
       setLoading(true);
       setError(null);
       try {
-        setComparison(await compareProducts(productAId, productBId));
-      } catch {
-        setError("Failed to load the live product comparison. Search again and try once more.");
+        const data = await compareProducts(productAId, productBId);
+        if (!isCancelled) {
+          setComparison(data);
+        }
+      } catch (err: unknown) {
+        if (!isCancelled) {
+          if (axios.isAxiosError(err) && err.response?.data?.detail) {
+            setError(String(err.response.data.detail));
+          } else {
+            setError("Failed to load the live product comparison. One or more products may be unavailable or expired.");
+          }
+        }
       } finally {
-        setLoading(false);
+        if (!isCancelled) {
+          setLoading(false);
+        }
       }
     };
     void loadComparison();
+    return () => {
+      isCancelled = true;
+    };
   }, [productAId, productBId]);
 
   const findProducts = async (event: React.FormEvent) => {
@@ -283,7 +304,7 @@ const CompareProducts: React.FC = () => {
     return (
       <PageBackground>
         <Navbar />
-        <main className="mx-auto max-w-3xl px-4 py-20 text-center">
+        <main className="mx-auto max-w-4xl px-4 py-16 text-center">
           <div
             className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl"
             style={{ background: "linear-gradient(135deg, #EDE9FE, #DDD6FE)" }}
@@ -294,17 +315,70 @@ const CompareProducts: React.FC = () => {
             Choose a product to compare
           </h1>
           <p className="mt-2 text-sm" style={{ color: "#7A7068" }}>
-            Open any live product and click Compare to begin side-by-side analysis.
+            Select a product to begin side-by-side comparison analysis.
           </p>
-          <button
-            type="button"
-            onClick={() => navigate("/categories")}
-            className="mt-6 inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold text-white"
-            style={{ background: "linear-gradient(135deg, #7C3AED, #6D28D9)" }}
-          >
-            Browse Categories
-          </button>
+
+          {currentSearchResults.length > 0 ? (
+            <div className="mt-8 text-left">
+              <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-[#7C3AED]">
+                Choose From Your Cart / Results
+              </h2>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {currentSearchResults.map((prod) => {
+                  const pid = getProductComparisonId(prod);
+                  return (
+                    <button
+                      key={pid || prod.name}
+                      type="button"
+                      onClick={() =>
+                        navigate(`/compare?product_a=${encodeURIComponent(pid)}`, {
+                          state: location.state,
+                        })
+                      }
+                      className="flex items-center gap-3 rounded-2xl border p-3.5 text-left transition-all hover:-translate-y-px hover:border-purple-300 hover:shadow-md"
+                      style={{ background: "#FFFFFF", borderColor: "#E8E2D9" }}
+                    >
+                      {prod.image ? (
+                        <img
+                          src={prod.image}
+                          alt=""
+                          className="h-14 w-14 rounded-xl object-cover shrink-0 border"
+                          style={{ borderColor: "#E8E2D9" }}
+                        />
+                      ) : (
+                        <div
+                          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-base"
+                          style={{ background: "#F8F5F0" }}
+                        >
+                          📦
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-[#7C3AED]">
+                          {prod.brand || "Brand"}
+                        </p>
+                        <p className="truncate text-sm font-bold text-[#0D0B1E]">{prod.name}</p>
+                        <p className="mt-0.5 text-xs font-semibold text-[#7C3AED]">
+                          {formatPrice(prod.price)}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => navigate("/categories")}
+              className="mt-6 inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold text-white"
+              style={{ background: "linear-gradient(135deg, #7C3AED, #6D28D9)" }}
+            >
+              Browse Categories
+            </button>
+          )}
         </main>
+        <Footer />
       </PageBackground>
     );
   }
@@ -324,9 +398,32 @@ const CompareProducts: React.FC = () => {
             Choose a different product
           </h1>
           <p className="mt-2 text-sm" style={{ color: "#7A7068" }}>
-            A product cannot be compared against itself.
+            A product cannot be compared against itself. Please select two distinct products.
           </p>
+          <div className="mt-6 flex justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate("/cart")}
+              className="rounded-xl border border-[#E8E2D9] bg-white px-5 py-2.5 text-sm font-semibold text-[#5A5248] hover:bg-gray-50 transition"
+            >
+              Return to Cart
+            </button>
+            {currentSearchResults.length > 0 && (
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(`/compare?product_a=${encodeURIComponent(productAId)}`, {
+                    state: location.state,
+                  })
+                }
+                className="rounded-xl bg-purple-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-purple-700 transition"
+              >
+                Pick Another Product
+              </button>
+            )}
+          </div>
         </main>
+        <Footer />
       </PageBackground>
     );
   }
@@ -522,7 +619,30 @@ const CompareProducts: React.FC = () => {
             className="rounded-3xl border p-8 text-center"
             style={{ background: "#FFF5F5", borderColor: "#FECACA", color: "#DC2626" }}
           >
-            {error}
+            <AlertTriangle className="mx-auto h-8 w-8 text-rose-500 mb-2" />
+            <p className="font-semibold text-base">{error}</p>
+            <div className="mt-5 flex items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => navigate("/cart")}
+                className="rounded-xl border border-rose-300 bg-white px-4 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 transition"
+              >
+                Return to Cart
+              </button>
+              {currentSearchResults.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate(`/compare?product_a=${encodeURIComponent(productAId)}`, {
+                      state: location.state,
+                    })
+                  }
+                  className="rounded-xl bg-purple-600 px-4 py-2 text-xs font-semibold text-white hover:bg-purple-700 transition"
+                >
+                  Choose Another Product
+                </button>
+              )}
+            </div>
           </div>
         )}
 
@@ -673,6 +793,8 @@ const CompareProducts: React.FC = () => {
           </>
         )}
       </main>
+
+      <Footer />
     </PageBackground>
   );
 };

@@ -16,11 +16,21 @@ class Settings(BaseSettings):
     app_version: str = "0.1.0"
     debug: bool = False
     database_url: str = "sqlite:///./shopmind.db"
+    cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000"
     openrouter_api_key: str = ""
     openrouter_model: str = "openai/gpt-4o-mini"
     openrouter_site_url: str = "http://localhost:5173"
     openrouter_app_name: str = "ShopMind AI"
+    openrouter_timeout_seconds: float = 25.0
     serpapi_api_key: str = ""
+
+    def get_allowed_origins(self) -> list[str]:
+        """Parse comma-separated cors_origins string into a list of origins."""
+        if not self.cors_origins:
+            return ["*"]
+        if self.cors_origins.strip() == "*":
+            return ["*"]
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
     @field_validator("debug", mode="before")
     @classmethod

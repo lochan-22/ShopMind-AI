@@ -1,6 +1,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Home, Compass, Sparkles } from "lucide-react";
+import Navbar from "../components/common/Navbar";
+import Footer from "../components/common/Footer";
 import PageBackground from "../components/common/PageBackground";
 
 const NotFound: React.FC = () => {
@@ -8,10 +10,12 @@ const NotFound: React.FC = () => {
 
   return (
     <PageBackground>
-      <div className="min-h-screen flex items-center justify-center px-4 py-12">
+      <Navbar />
+
+      <main className="flex min-h-[calc(100vh-280px)] items-center justify-center px-4 py-12">
         <div className="relative w-full max-w-xl">
           <div
-            className="rounded-3xl border px-6 py-10 sm:px-10 sm:py-14 flex flex-col items-center text-center"
+            className="flex flex-col items-center rounded-3xl border px-6 py-10 sm:px-10 sm:py-14 text-center"
             style={{
               background: "rgba(255,255,255,0.88)",
               backdropFilter: "blur(20px)",
@@ -98,7 +102,9 @@ const NotFound: React.FC = () => {
             Error code: 404 — this aisle doesn't exist.
           </p>
         </div>
-      </div>
+      </main>
+
+      <Footer />
     </PageBackground>
   );
 };

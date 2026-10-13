@@ -40,7 +40,10 @@ const Comparison: React.FC = () => {
   const { ref, inView } = useInView<HTMLDivElement>();
 
   return (
-    <section className="relative w-full py-20 overflow-hidden">
+    <section
+      className="relative w-full py-20 overflow-hidden border-b border-[#E8E2D9]/60"
+      style={{ backgroundColor: "#FBF8F4" }}
+    >
       {/* ── Background Atmospheric Dotted Grid & Arcs ── */}
       <div
         className="pointer-events-none absolute inset-0 opacity-25 select-none"

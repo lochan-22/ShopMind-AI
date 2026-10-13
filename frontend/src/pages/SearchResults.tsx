@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "../components/common/Navbar";
+import Footer from "../components/common/Footer";
 import PageBackground from "../components/common/PageBackground";
 import { ProductCard } from "../components/product/ProductCard";
 import { ProductSearchForm } from "../components/product/ProductSearchForm";
@@ -25,6 +26,27 @@ import {
   Target,
   Zap,
 } from "lucide-react";
+
+const isDuplicateSummary = (
+  summary?: string | null,
+  directAnswer?: string | null,
+): boolean => {
+  if (!summary || !directAnswer) return false;
+  const sNorm = summary.toLowerCase().replace(/[^a-z0-9]/g, " ").trim();
+  const dNorm = directAnswer.toLowerCase().replace(/[^a-z0-9]/g, " ").trim();
+  if (sNorm === dNorm) return true;
+  if (sNorm.length > 20 && dNorm.includes(sNorm.slice(0, 30))) return true;
+  if (dNorm.length > 20 && sNorm.includes(dNorm.slice(0, 30))) return true;
+  const sWords = new Set(sNorm.split(/\s+/).filter((w) => w.length > 3));
+  const dWords = new Set(dNorm.split(/\s+/).filter((w) => w.length > 3));
+  if (sWords.size === 0 || dWords.size === 0) return false;
+  let common = 0;
+  for (const w of sWords) {
+    if (dWords.has(w)) common++;
+  }
+  const ratio = common / Math.min(sWords.size, dWords.size);
+  return ratio > 0.6;
+};
 
 const SearchResults: React.FC = () => {
   const navigate = useNavigate();
@@ -133,9 +155,39 @@ const SearchResults: React.FC = () => {
     };
   }, [query, retrySequence]);
 
+  const [sortBy, setSortBy] = useState<"match" | "price_asc" | "price_desc" | "rating">("match");
+  const [visibleCount, setVisibleCount] = useState<number>(12);
+
+  useEffect(() => {
+    setVisibleCount(12);
+  }, [query]);
+
   const topRecs = decision?.top_recommendations ?? [];
   const aiAnalysis = decision?.ai_analysis;
   const intent = decision?.intent;
+
+  // Deduplicate: exclude items already in top recommendations from broader market catalogue
+  const topRecIds = React.useMemo(() => {
+    return new Set(topRecs.map((p) => String(p.product_id || p.id)));
+  }, [topRecs]);
+
+  const additionalProducts = React.useMemo(() => {
+    return products.filter((p) => !topRecIds.has(String(p.product_id || p.id)));
+  }, [products, topRecIds]);
+
+  const sortedAdditionalProducts = React.useMemo(() => {
+    const list = [...additionalProducts];
+    if (sortBy === "price_asc") {
+      list.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
+    } else if (sortBy === "price_desc") {
+      list.sort((a, b) => (b.price ?? -Infinity) - (a.price ?? -Infinity));
+    } else if (sortBy === "rating") {
+      list.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+    }
+    return list;
+  }, [additionalProducts, sortBy]);
+
+  const paginatedAdditionalProducts = sortedAdditionalProducts.slice(0, visibleCount);
 
   return (
     <PageBackground>
@@ -292,8 +344,8 @@ const SearchResults: React.FC = () => {
           </div>
         )}
 
-        {/* Empty state */}
-        {!loading && !error && hasCompletedSearch && products.length === 0 && (
+        {/* Empty state (only if no AI analysis was returned) */}
+        {!loading && !error && hasCompletedSearch && products.length === 0 && !aiAnalysis && (
           <div
             className="flex flex-col items-center justify-center rounded-3xl border py-20 text-center"
             style={{
@@ -325,20 +377,47 @@ const SearchResults: React.FC = () => {
               <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                 <div className="inline-flex items-center gap-2 rounded-full border border-purple-200 bg-purple-50/80 px-3.5 py-1 text-xs font-bold text-[#7C3AED]">
                   <Sparkles className="h-3.5 w-3.5" />
-                  <span>ShopMind AI Shopping Decision Engine</span>
+                  <span>ShopMind AI Shopping Assistant</span>
                 </div>
-                <span className="text-xs font-semibold text-[#A89F95]">
-                  Real-Time Market Analysis
+                <span
+                  className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+                  style={{
+                    background: aiAnalysis.analysis_source === "openrouter" ? "#EDE9FE" : "#F3F4F6",
+                    color: aiAnalysis.analysis_source === "openrouter" ? "#6D28D9" : "#4B5563",
+                    border: aiAnalysis.analysis_source === "openrouter" ? "1px solid #C4B5FD" : "1px solid #E5E7EB",
+                  }}
+                >
+                  {aiAnalysis.analysis_source === "openrouter"
+                    ? `Powered by ${aiAnalysis.model || "OpenRouter AI"}`
+                    : "Market Evaluation"}
                 </span>
               </div>
 
-              {/* Summary */}
-              <p
-                className="text-base sm:text-lg font-medium leading-relaxed"
-                style={{ color: "#0D0B1E" }}
-              >
-                {aiAnalysis.summary}
-              </p>
+              {/* Direct Answer */}
+              {aiAnalysis.direct_answer && (
+                <div
+                  className="mb-4 rounded-2xl p-4 sm:p-5 text-sm sm:text-base leading-relaxed font-medium"
+                  style={{
+                    background: "linear-gradient(135deg, #F5F3FF 0%, #FAF5FF 100%)",
+                    borderLeft: "4px solid #7C3AED",
+                    color: "#0D0B1E",
+                  }}
+                >
+                  <p className="font-semibold text-xs text-[#7C3AED] uppercase tracking-wider mb-1">
+                    AI Shopping Guidance
+                  </p>
+                  <p>{aiAnalysis.direct_answer}</p>
+                </div>
+              )}
+
+              {/* Summary / Explanatory Paragraph - only if provided and not duplicating the guidance */}
+              {aiAnalysis.summary &&
+                aiAnalysis.summary.trim().length > 0 &&
+                !isDuplicateSummary(aiAnalysis.summary, aiAnalysis.direct_answer) && (
+                  <p className="mb-4 text-sm sm:text-base font-normal leading-relaxed text-[#5A5248]">
+                    {aiAnalysis.summary}
+                  </p>
+                )}
 
               {/* Key criteria */}
               {aiAnalysis.key_criteria && aiAnalysis.key_criteria.length > 0 && (
@@ -353,7 +432,7 @@ const SearchResults: React.FC = () => {
                         key={idx}
                         className="flex items-start gap-2 rounded-xl p-3 text-xs leading-relaxed font-medium"
                         style={{
-                          background: "rgba(255, 255, 255, 0.8)",
+                          background: "rgba(255, 255, 255, 0.9)",
                           border: "1px solid #E8E2D9",
                           color: "#5A5248",
                         }}
@@ -363,6 +442,43 @@ const SearchResults: React.FC = () => {
                       </li>
                     ))}
                   </ul>
+                </div>
+              )}
+
+              {/* Trade-offs & Final Recommendation */}
+              {(aiAnalysis.trade_offs || aiAnalysis.final_recommendation) && (
+                <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                  {aiAnalysis.trade_offs && (
+                    <div
+                      className="rounded-xl p-3.5 text-xs font-medium"
+                      style={{
+                        background: "#FFFBEB",
+                        border: "1px solid #FDE68A",
+                        color: "#92400E",
+                      }}
+                    >
+                      <p className="font-bold text-[11px] uppercase tracking-wider mb-1 flex items-center gap-1.5 text-[#B45309]">
+                        <span>⚖️</span> Market Trade-Offs
+                      </p>
+                      <p className="leading-relaxed">{aiAnalysis.trade_offs}</p>
+                    </div>
+                  )}
+
+                  {aiAnalysis.final_recommendation && (
+                    <div
+                      className="rounded-xl p-3.5 text-xs font-medium"
+                      style={{
+                        background: "#F5F3FF",
+                        border: "1px solid #DDD6FE",
+                        color: "#5B21B6",
+                      }}
+                    >
+                      <p className="font-bold text-[11px] uppercase tracking-wider mb-1 flex items-center gap-1.5 text-[#7C3AED]">
+                        <span>🎯</span> Final Verdict
+                      </p>
+                      <p className="leading-relaxed">{aiAnalysis.final_recommendation}</p>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -380,7 +496,54 @@ const SearchResults: React.FC = () => {
                   <span>{aiAnalysis.budget_verdict}</span>
                 </div>
               )}
+
+              {/* Missing Information / Limitations Alert */}
+              {(aiAnalysis.missing_information || aiAnalysis.limitations) && (
+                <div
+                  className="mt-3 flex items-start gap-2.5 rounded-xl p-3 text-xs font-medium"
+                  style={{
+                    background: "#FFF7ED",
+                    border: "1px solid #FFEDD5",
+                    color: "#9A3412",
+                  }}
+                >
+                  <span className="text-sm">ℹ️</span>
+                  <div>
+                    {aiAnalysis.missing_information && (
+                      <p className="font-semibold">{aiAnalysis.missing_information}</p>
+                    )}
+                    {aiAnalysis.limitations && aiAnalysis.limitations !== aiAnalysis.missing_information && (
+                      <p className="mt-0.5 text-[11px] opacity-90">{aiAnalysis.limitations}</p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
+          </div>
+        )}
+
+        {/* Zero-match strict constraint alert */}
+        {!loading && !error && hasCompletedSearch && topRecs.length === 0 && aiAnalysis && (
+          <div
+            className="mb-10 rounded-2xl border p-6 text-center"
+            style={{
+              background: "#FFFBEB",
+              borderColor: "#FDE68A",
+              color: "#92400E",
+            }}
+          >
+            <span className="text-3xl mb-2 block">⚠️</span>
+            <h3 className="text-base font-bold text-[#92400E]">
+              No Products Met All Strict Constraints
+            </h3>
+            <p className="mt-1.5 text-xs sm:text-sm text-[#B45309] max-w-xl mx-auto leading-relaxed">
+              {aiAnalysis.limitations ||
+                aiAnalysis.direct_answer ||
+                "No live market models satisfied both your stated budget ceiling and hardware specifications. Over-budget and unverified configurations were omitted."}
+            </p>
+            <p className="mt-2 text-xs font-semibold text-[#78350F]">
+              Suggestion: Consider broadening your budget ceiling or broadening technical requirements.
+            </p>
           </div>
         )}
 
@@ -412,7 +575,21 @@ const SearchResults: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
+            {/* If fewer than 5 qualified because of strict constraints, show limitation banner */}
+            {topRecs.length < 5 && (
+              <div
+                className="mb-4 rounded-xl px-4 py-2.5 text-xs font-medium border"
+                style={{
+                  background: "#FEF3C7",
+                  borderColor: "#FDE68A",
+                  color: "#92400E",
+                }}
+              >
+                <span>⚠️ Strict Constraint Match: Only {topRecs.length} product(s) in live listings satisfied all required criteria. Non-qualifying models were omitted from top recommendations.</span>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 gap-3 sm:gap-5 sm:grid-cols-2 lg:grid-cols-5">
               {topRecs.map((product) => (
                 <ProductCard
                   key={`rec-${product.id}`}
@@ -424,34 +601,57 @@ const SearchResults: React.FC = () => {
           </div>
         )}
 
-        {/* Complete Product Listing */}
-        {products.length > 0 && (
+        {/* Explore More Products / All Live Market Results */}
+        {additionalProducts.length > 0 && (
           <div>
-            <div className="mb-5 flex items-center justify-between">
+            <div className="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <h3
                   className="text-lg sm:text-xl font-bold tracking-tight"
                   style={{ color: "#0D0B1E" }}
                 >
-                  All Live Market Results
+                  Explore More Products
                 </h3>
                 <p className="text-xs sm:text-sm" style={{ color: "#7A7068" }}>
+                  Showing{" "}
                   <span className="font-bold" style={{ color: "#0D0B1E" }}>
-                    {products.length}
+                    {Math.min(visibleCount, sortedAdditionalProducts.length)}
                   </span>{" "}
-                  live offers fetched from Google Shopping
+                  of{" "}
+                  <span className="font-bold" style={{ color: "#0D0B1E" }}>
+                    {sortedAdditionalProducts.length}
+                  </span>{" "}
+                  additional live offers from Google Shopping
                 </p>
               </div>
-              <span
-                className="rounded-full px-3 py-1 text-[11px] font-semibold"
-                style={{ background: "#FFF7ED", color: "#F97316" }}
-              >
-                Google Shopping · India
-              </span>
+
+              {/* Controls: Sorting */}
+              <div className="flex items-center gap-2">
+                <label htmlFor="sort-select" className="text-xs font-semibold text-[#7A7068]">
+                  Sort:
+                </label>
+                <select
+                  id="sort-select"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="rounded-xl border border-[#E8E2D9] bg-white px-3 py-1.5 text-xs font-semibold text-[#0D0B1E] shadow-xs focus:border-[#7C3AED] focus:outline-hidden"
+                >
+                  <option value="match">Best Match</option>
+                  <option value="price_asc">Price: Low to High</option>
+                  <option value="price_desc">Price: High to Low</option>
+                  <option value="rating">Highest Rated</option>
+                </select>
+                <span
+                  className="rounded-full px-3 py-1 text-[11px] font-semibold"
+                  style={{ background: "#FFF7ED", color: "#F97316" }}
+                >
+                  Google Shopping · India
+                </span>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {products.map((product) => (
+            <div className="grid grid-cols-1 gap-3 sm:gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {paginatedAdditionalProducts.map((product) => (
                 <ProductCard
                   key={product.id}
                   product={product}
@@ -459,9 +659,24 @@ const SearchResults: React.FC = () => {
                 />
               ))}
             </div>
+
+            {/* Load More Pagination */}
+            {visibleCount < sortedAdditionalProducts.length && (
+              <div className="mt-8 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setVisibleCount((prev) => prev + 12)}
+                  className="rounded-xl px-6 py-2.5 text-sm font-semibold text-[#7C3AED] border border-[#DDD6FE] bg-[#F5F3FF] transition-all hover:bg-[#EDE9FE] hover:border-[#C4B5FD] shadow-xs"
+                >
+                  Load More Products ({sortedAdditionalProducts.length - visibleCount} remaining)
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
+
+      <Footer />
     </PageBackground>
   );
 };

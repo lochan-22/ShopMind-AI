@@ -27,7 +27,10 @@ const Workflow: React.FC = () => {
   const { ref, inView } = useInView<HTMLDivElement>();
 
   return (
-    <section className="relative w-full py-20 overflow-hidden">
+    <section
+      className="relative w-full py-20 overflow-hidden border-b border-[#E8E2D9]/70"
+      style={{ background: "linear-gradient(180deg, #F5F0FB 0%, #FAF7F2 100%)" }}
+    >
       {/* ── Background Technical Atmosphere ── */}
       <div
         className="pointer-events-none absolute inset-0 opacity-20 select-none"
@@ -37,6 +40,33 @@ const Workflow: React.FC = () => {
         }}
         aria-hidden="true"
       />
+
+      {/* Subtle background workflow connector lines & directional arrows behind cards */}
+      <svg
+        className="pointer-events-none absolute inset-0 h-full w-full opacity-25 select-none hidden lg:block"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+      >
+        <defs>
+          <marker id="wf-arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#A78BFA" />
+          </marker>
+        </defs>
+        <path
+          d="M 120 280 L 800 280"
+          stroke="#DDD6FE"
+          strokeWidth="1.5"
+          strokeDasharray="4 6"
+          markerEnd="url(#wf-arrow)"
+        />
+        <path
+          d="M 800 480 L 120 480"
+          stroke="#DDD6FE"
+          strokeWidth="1.5"
+          strokeDasharray="4 6"
+          markerEnd="url(#wf-arrow)"
+        />
+      </svg>
 
       {/* Ambient gradient glow */}
       <div
@@ -67,17 +97,9 @@ const Workflow: React.FC = () => {
           </p>
         </div>
 
-        {/* 12-Step Responsive Pipeline Grid */}
-        <div className="relative mt-14">
-          {/* Subtle horizontal timeline track behind cards on desktop */}
-          <div
-            className="pointer-events-none absolute top-1/2 left-0 right-0 h-px -translate-y-1/2 opacity-25 hidden xl:block"
-            style={{
-              background: "linear-gradient(90deg, #7C3AED 0%, #EA580C 50%, #7C3AED 100%)",
-            }}
-          />
-
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-12">
+        {/* 12-Step Responsive Pipeline Grid — 1-col mobile / 2-col tablet / 3-col desktop */}
+        <div className="relative mt-12">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
             {STEPS.map((step, idx) => {
               const isOrange = idx % 2 !== 0;
               const accentColor = isOrange ? "#EA580C" : "#7C3AED";
@@ -92,20 +114,20 @@ const Workflow: React.FC = () => {
                     transitionDelay: inView ? `${idx * 25}ms` : "0ms",
                     boxShadow: "0 2px 10px rgba(13, 11, 30, 0.04)",
                   }}
-                  className={`group relative flex flex-col justify-between rounded-2xl border border-[#E8E2D9] bg-white/95 p-3.5 text-center backdrop-blur-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-purple-300 hover:shadow-lg ${
+                  className={`group relative flex flex-col justify-between rounded-2xl border border-[#E8E2D9] bg-white/95 p-4 sm:p-5 text-center backdrop-blur-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-purple-300 hover:shadow-lg ${
                     inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
                   }`}
                 >
                   {/* Subtle top indicator dot */}
                   <span
-                    className="mx-auto mb-2 h-1.5 w-1.5 rounded-full transition-transform duration-300 group-hover:scale-150"
+                    className="mx-auto mb-2.5 h-2 w-2 rounded-full transition-transform duration-300 group-hover:scale-150"
                     style={{ background: accentColor }}
                   />
 
                   <div>
                     {/* Step Number Tag */}
                     <div
-                      className="inline-flex rounded-lg px-2 py-0.5 text-xs font-black tracking-wider transition-transform duration-300 group-hover:scale-105"
+                      className="inline-flex rounded-lg px-2.5 py-0.5 text-xs font-black tracking-wider transition-transform duration-300 group-hover:scale-105"
                       style={{
                         background: accentBg,
                         color: accentColor,
@@ -114,12 +136,12 @@ const Workflow: React.FC = () => {
                       {step.stepNum}
                     </div>
 
-                    <h3 className="mt-2 text-[11.5px] font-bold leading-tight text-[#0D0B1E]">
+                    <h3 className="mt-2.5 text-[14px] font-bold leading-tight text-[#0D0B1E]">
                       {step.label}
                     </h3>
                   </div>
 
-                  <p className="mt-1.5 text-[9.5px] text-[#A89F95] leading-snug">
+                  <p className="mt-2 text-[12px] text-[#A89F95] leading-snug">
                     {step.sublabel}
                   </p>
                 </div>

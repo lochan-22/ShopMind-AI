@@ -75,7 +75,7 @@ export const MAIN_CATEGORIES: MainCategory[] = [
   },
   {
     slug: "home-kitchen",
-    label: "Home & Kitchen",
+    label: "Home & Living",
     emoji: "🏠",
     description: "Furniture, cookware, décor, bedding & more",
     subcategories: [
@@ -90,6 +90,22 @@ export const MAIN_CATEGORIES: MainCategory[] = [
       { slug: "cleaning",           label: "Cleaning",           searchQuery: "home cleaning products India" },
       { slug: "bathroom",           label: "Bathroom",           searchQuery: "bathroom accessories India" },
       { slug: "garden",             label: "Garden",             searchQuery: "garden tools plants India" },
+    ],
+  },
+  {
+    slug: "footwear",
+    label: "Footwear",
+    emoji: "👟",
+    description: "Sneakers, running shoes, formal shoes, sandals & boots",
+    subcategories: [
+      { slug: "sneakers",         label: "Sneakers",         searchQuery: "sneakers India" },
+      { slug: "running-shoes",    label: "Running Shoes",    searchQuery: "running shoes India" },
+      { slug: "casual-shoes",     label: "Casual Shoes",     searchQuery: "casual shoes men women India" },
+      { slug: "formal-shoes",     label: "Formal Shoes",     searchQuery: "formal shoes India" },
+      { slug: "sports-shoes",     label: "Sports Shoes",     searchQuery: "sports athletic training shoes India" },
+      { slug: "sandals-slippers", label: "Sandals & Slippers", searchQuery: "sandals slippers footwear India" },
+      { slug: "boots",            label: "Boots",            searchQuery: "boots footwear India" },
+      { slug: "heels-flats",      label: "Heels & Flats",    searchQuery: "women heels flats shoes India" },
     ],
   },
   {
@@ -196,6 +212,20 @@ export const MAIN_CATEGORIES: MainCategory[] = [
     ],
   },
   {
+    slug: "smart-tech",
+    label: "Smart Tech & Toys",
+    emoji: "🤖",
+    description: "Smart home devices, smartwatches, drones, robotics & STEM toys",
+    subcategories: [
+      { slug: "smart-home",       label: "Smart Home Devices", searchQuery: "smart home devices India" },
+      { slug: "smart-watches",    label: "Smart Watches",     searchQuery: "smartwatches India" },
+      { slug: "drones-robotics",  label: "Drones & Robotics", searchQuery: "drones robotics India" },
+      { slug: "stem-toys",        label: "STEM & Learning Toys", searchQuery: "stem learning toys India" },
+      { slug: "rc-action-toys",   label: "RC & Action Toys",  searchQuery: "remote control toys India" },
+      { slug: "smart-audio",      label: "Smart Audio & Speakers", searchQuery: "smart speakers voice assistants India" },
+    ],
+  },
+  {
     slug: "groceries",
     label: "Groceries & Food",
     emoji: "🛒",
@@ -210,14 +240,41 @@ export const MAIN_CATEGORIES: MainCategory[] = [
   },
 ];
 
-/** Look up a main category by its slug. Returns undefined if not found. */
-export const findMainCategory = (slug: string): MainCategory | undefined =>
-  MAIN_CATEGORIES.find((cat) => cat.slug === slug);
+/**
+ * Common slug aliases to prevent broken URLs if hyphenated or alternate names are requested.
+ */
+export const SLUG_ALIASES: Record<string, string> = {
+  "beauty-personal-care": "beauty",
+  "sports-fitness": "sports",
+  "books-education": "books",
+  "pet-supplies": "pets",
+  "home-living": "home-kitchen",
+  "smart-tech-toys": "smart-tech",
+};
+
+/** Normalize category slug (lowercased, trimmed, hyphenated, alias-resolved) */
+export const normalizeCategorySlug = (raw: string): string => {
+  if (!raw) return "";
+  const cleaned = raw.toLowerCase().trim().replace(/_/g, "-");
+  return SLUG_ALIASES[cleaned] ?? cleaned;
+};
+
+/** Look up a main category by its slug or alias. Returns undefined if not found. */
+export const findMainCategory = (slug: string): MainCategory | undefined => {
+  if (!slug) return undefined;
+  const normalized = normalizeCategorySlug(slug);
+  return MAIN_CATEGORIES.find(
+    (cat) => cat.slug.toLowerCase() === normalized || cat.slug.toLowerCase() === slug.toLowerCase().trim()
+  );
+};
 
 /** Look up a subcategory within a main category by both slugs. */
 export const findSubCategory = (
   mainSlug: string,
   subSlug: string,
-): SubCategory | undefined =>
-  findMainCategory(mainSlug)?.subcategories.find((s) => s.slug === subSlug);
-
+): SubCategory | undefined => {
+  const main = findMainCategory(mainSlug);
+  if (!main) return undefined;
+  const normalizedSub = subSlug?.toLowerCase().trim();
+  return main.subcategories.find((s) => s.slug.toLowerCase() === normalizedSub);
+};

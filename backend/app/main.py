@@ -1,7 +1,16 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+import sys
+from pathlib import Path
 from urllib.parse import parse_qsl, urlencode
 
+# Ensure 'backend' directory is in sys.path so 'app' imports work from repo root or backend/
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.core.config import settings
 from app.routes.products import router as products_router
 from app.routes.agent import router as agent_router
 from app.routes.health import router as health_router
@@ -39,10 +48,14 @@ class SensitiveQueryParameterRedactionMiddleware:
 
 app.add_middleware(SensitiveQueryParameterRedactionMiddleware)
 
+# Production-ready CORS configuration
+allowed_origins = settings.get_allowed_origins()
+allow_credentials = allowed_origins != ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=allowed_origins,
+    allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -51,6 +64,7 @@ app.add_middleware(
 app.include_router(products_router, prefix="/api")
 app.include_router(agent_router, prefix="/api")
 app.include_router(health_router)
+app.include_router(health_router, prefix="/api")
 
 
 @app.get("/")

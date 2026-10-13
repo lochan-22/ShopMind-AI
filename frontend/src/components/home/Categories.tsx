@@ -24,7 +24,10 @@ const Categories: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="relative w-full py-20 overflow-hidden">
+    <section
+      className="relative w-full py-20 overflow-hidden border-b border-[#E8E2D9]/60"
+      style={{ backgroundColor: "#FAF7F2" }}
+    >
       {/* ── Background Atmosphere & Technical Arcs ── */}
       <div
         className="pointer-events-none absolute inset-0 opacity-20 select-none"
@@ -65,12 +68,12 @@ const Categories: React.FC = () => {
             Shop Across Categories
           </h2>
           <p className="mt-2 text-xs sm:text-sm leading-relaxed text-[#7A7068]">
-            Explore 11 live shopping departments and hundreds of subcategories.
+            Explore all {MAIN_CATEGORIES.length} live shopping departments and hundreds of subcategories.
           </p>
         </div>
 
-        {/* 11 Department Cards Grid */}
-        <div className="mt-14 grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-11">
+        {/* 11 Department Cards Grid — 2-col mobile / 3-col tablet / 4-col desktop */}
+        <div className="mt-8 grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4">
           {MAIN_CATEGORIES.map((category, index) => {
             const accent = CATEGORY_ACCENTS[index % CATEGORY_ACCENTS.length];
             return (
@@ -82,13 +85,13 @@ const Categories: React.FC = () => {
                   transitionDelay: inView ? `${index * 25}ms` : "0ms",
                   boxShadow: "0 2px 10px rgba(13, 11, 30, 0.04)",
                 }}
-                className={`group relative flex flex-col items-center justify-center gap-2.5 rounded-2xl border border-[#E8E2D9] bg-white/95 px-3 py-5 text-center backdrop-blur-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-purple-300 hover:shadow-xl ${
+                className={`group relative flex flex-col items-center justify-center gap-2.5 rounded-2xl border border-[#E8E2D9] bg-white/95 px-4 py-6 text-center backdrop-blur-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-purple-300 hover:shadow-xl ${
                   inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
                 }`}
               >
                 {/* Emoji Icon Container */}
                 <div
-                  className="flex h-12 w-12 items-center justify-center rounded-xl text-2xl shadow-sm transition-transform duration-300 group-hover:scale-110"
+                  className="flex h-14 w-14 items-center justify-center rounded-xl text-2xl shadow-sm transition-transform duration-300 group-hover:scale-110"
                   style={{
                     background: accent.bg,
                     boxShadow: `0 4px 12px ${accent.glow}`,
@@ -100,11 +103,11 @@ const Categories: React.FC = () => {
                 {/* Title & Count */}
                 <div className="flex flex-col items-center">
                   <span
-                    className="text-xs font-bold leading-tight text-[#0D0B1E] line-clamp-1 group-hover:text-[#7C3AED] transition-colors"
+                    className="text-sm font-bold leading-tight text-[#0D0B1E] line-clamp-2 group-hover:text-[#7C3AED] transition-colors"
                   >
                     {category.label}
                   </span>
-                  <span className="mt-0.5 text-[10px] text-[#A89F95]">
+                  <span className="mt-0.5 text-[11px] text-[#A89F95]">
                     {category.subcategories.length} subcategories
                   </span>
                 </div>
