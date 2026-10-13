@@ -1,23 +1,37 @@
 import axios, { type AxiosRequestConfig } from "axios";
 
 const isProduction = import.meta.env.PROD;
-const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+const rawEnvBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+
+// Production default backend on Render
+const DEFAULT_PRODUCTION_BACKEND = "https://shopmind-ai-backend-1mlr.onrender.com/api";
+
+function normalizeBaseUrl(url?: string): string {
+  if (!url) return "";
+  let clean = url.trim().replace(/\/+$/, "");
+  if (!clean.endsWith("/api")) {
+    clean = `${clean}/api`;
+  }
+  return clean;
+}
+
+const configuredBaseUrl = normalizeBaseUrl(rawEnvBaseUrl);
 
 // Available backend base URLs in order of priority:
-// 1. Explicit VITE_API_BASE_URL environment variable if provided
-// 2. In production: relative "/api" for reverse proxy / CDN rewrite deployments (never localhost)
+// 1. Explicit normalized VITE_API_BASE_URL if provided
+// 2. In production: DEFAULT_PRODUCTION_BACKEND, followed by relative "/api"
 // 3. In development: active local backend dev ports (8001, 8000), followed by "/api"
 const CANDIDATE_BASE_URLS: string[] = (
   configuredBaseUrl
-    ? [configuredBaseUrl]
+    ? [configuredBaseUrl, "/api"]
     : isProduction
-      ? ["/api"]
+      ? [DEFAULT_PRODUCTION_BACKEND, "/api"]
       : ["http://127.0.0.1:8001/api", "http://127.0.0.1:8000/api", "/api"]
 ).filter(Boolean);
 
 const candidateUrls: string[] = Array.from(new Set(CANDIDATE_BASE_URLS));
 
-let activeBaseUrl = candidateUrls[0] || (isProduction ? "/api" : "http://127.0.0.1:8001/api");
+let activeBaseUrl = candidateUrls[0] || (isProduction ? DEFAULT_PRODUCTION_BACKEND : "http://127.0.0.1:8001/api");
 
 const api = axios.create({
   baseURL: activeBaseUrl,

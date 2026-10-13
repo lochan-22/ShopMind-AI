@@ -16,7 +16,12 @@ class Settings(BaseSettings):
     app_version: str = "0.1.0"
     debug: bool = False
     database_url: str = "sqlite:///./shopmind.db"
-    cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000"
+    cors_origins: str = (
+        "http://localhost:5173,http://127.0.0.1:5173,"
+        "http://localhost:3000,http://127.0.0.1:3000,"
+        "https://shop-mind-ai-two.vercel.app"
+    )
+    cors_origin_regex: str = r"^https://.*\.vercel\.app$"
     openrouter_api_key: str = ""
     openrouter_model: str = "openai/gpt-4o-mini"
     openrouter_site_url: str = "http://localhost:5173"
@@ -30,7 +35,11 @@ class Settings(BaseSettings):
             return ["*"]
         if self.cors_origins.strip() == "*":
             return ["*"]
-        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+        origins = [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+        prod_vercel = "https://shop-mind-ai-two.vercel.app"
+        if prod_vercel not in origins:
+            origins.append(prod_vercel)
+        return origins
 
     @field_validator("debug", mode="before")
     @classmethod

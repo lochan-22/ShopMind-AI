@@ -55,14 +55,18 @@ allow_credentials = allowed_origins != ["*"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
+    allow_origin_regex=settings.cors_origin_regex,
     allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include routers AFTER creating app
+# Include routers both with and without /api prefix to support direct frontend calls
+# (e.g. /api/products/search and /products/search) without 404 routing mismatches
 app.include_router(products_router, prefix="/api")
+app.include_router(products_router)
 app.include_router(agent_router, prefix="/api")
+app.include_router(agent_router)
 app.include_router(health_router)
 app.include_router(health_router, prefix="/api")
 
