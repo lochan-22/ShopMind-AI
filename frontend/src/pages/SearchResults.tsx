@@ -633,7 +633,11 @@ const SearchResults: React.FC = () => {
                 <select
                   id="sort-select"
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as any)}
+                  onChange={(e) =>
+                    setSortBy(
+                      e.target.value as "match" | "price_asc" | "price_desc" | "rating",
+                    )
+                  }
                   className="rounded-xl border border-[#E8E2D9] bg-white px-3 py-1.5 text-xs font-semibold text-[#0D0B1E] shadow-xs focus:border-[#7C3AED] focus:outline-hidden"
                 >
                   <option value="match">Best Match</option>

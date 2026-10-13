@@ -204,7 +204,7 @@ export const getShoppingDecision = async (
       params: { q: normalizedQuery },
     });
     return response.data;
-  } catch (err) {
+  } catch {
     // Graceful fallback: if decision endpoint has a network/server issue, fall back to searchProducts
     const products = await searchProducts(normalizedQuery);
     return {
