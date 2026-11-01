@@ -1,7 +1,9 @@
+import { isAxiosError } from "axios";
 import api from "./api";
 
 const inFlightProductSearches = new Map<string, Promise<Product[]>>();
 const inFlightExternalProducts = new Map<string, Promise<Product>>();
+const inFlightDecisions = new Map<string, Promise<ShoppingDecision>>();
 
 export interface ProductOffer {
   price: number | null;
@@ -10,6 +12,8 @@ export interface ProductOffer {
   source_name: string | null;
   product_url: string | null;
   is_best_price: boolean;
+  condition?: string | null;
+  merchant_normalized?: string | null;
 }
 
 export const getProductComparisonId = (product: { product_id?: string; id?: number | string }): string => {
@@ -22,17 +26,28 @@ export const getProductComparisonId = (product: { product_id?: string; id?: numb
   return "";
 };
 
+/**
+ * Product shape shared by the search, decision, details and agent endpoints.
+ * Live (SerpApi) products carry a string `product_id`; catalog products use a
+ * numeric `id`. Every factual field may be missing from a live listing.
+ */
 export interface Product {
-  id: number;
+  id: number | string;
   name: string;
-  brand: string;
-  category: string;
-  price: number;
-  rating: number;
-  review_count: number;
-  description: string;
-  stock: boolean | null;
+  brand: string | null;
+  category: string | null;
+  price: number | null;
+  rating: number | null;
+  review_count: number | null;
+  description: string | null;
+  /** Boolean on search/details responses; the agent stream sends the raw status string. */
+  stock: boolean | string | null;
   image: string | null;
+  currency?: string | null;
+  condition?: string | null;
+  model?: string | null;
+  model_number?: string | null;
+  specifications?: Record<string, string> | null;
   product_id?: string;
   shopmind_url?: string;
   retailer?: string | null;
@@ -41,7 +56,7 @@ export interface Product {
   recommendation_badge?: string;
   why_recommended?: string;
   limitation?: string;
-  verified_specs?: Record<string, string>;
+  verified_specs?: Record<string, string | number | boolean | null>;
   score?: number;
   score_breakdown?: Record<string, number>;
 }
@@ -56,7 +71,12 @@ export interface AIAnalysis {
   top_pick_reason: string;
   limitations?: string;
   missing_information?: string | null;
-  analysis_source?: "openrouter" | "deterministic_fallback";
+  /**
+   * "openrouter": model-written analysis. "deterministic_fallback": the
+   * backend's rule-based market evaluation. "search_only": the decision
+   * endpoint failed and the client fell back to unranked live listings.
+   */
+  analysis_source?: "openrouter" | "deterministic_fallback" | "search_only";
   model?: string | null;
 }
 
@@ -90,6 +110,11 @@ export interface ShoppingDecision {
   all_products: Product[];
   total_found: number;
   qualifying_count?: number;
+  diagnostics?: {
+    total_retrieved: number;
+    qualifying_count: number;
+    disqualified_count: number;
+  };
 }
 
 export interface ComparisonOffer {
@@ -199,13 +224,34 @@ export const getShoppingDecision = async (
     throw new Error("Query cannot be empty.");
   }
 
+  // Share one live request between concurrent callers (e.g. StrictMode remounts).
+  const existingRequest = inFlightDecisions.get(normalizedQuery);
+  if (existingRequest) return existingRequest;
+  const request = fetchShoppingDecision(normalizedQuery);
+  inFlightDecisions.set(normalizedQuery, request);
+  try {
+    return await request;
+  } finally {
+    inFlightDecisions.delete(normalizedQuery);
+  }
+};
+
+const fetchShoppingDecision = async (
+  normalizedQuery: string,
+): Promise<ShoppingDecision> => {
   try {
     const response = await api.get<ShoppingDecision>("/products/decision", {
       params: { q: normalizedQuery },
     });
     return response.data;
-  } catch {
-    // Graceful fallback: if decision endpoint has a network/server issue, fall back to searchProducts
+  } catch (error) {
+    // Invalid requests and an unavailable search provider would fail the plain
+    // search too, so surface those errors directly.
+    const status = isAxiosError(error) ? error.response?.status : undefined;
+    if (status === 400 || status === 503) throw error;
+
+    // The decision engine failed but live search may still work. Return the
+    // unranked listings and say so plainly; never fabricate analysis.
     const products = await searchProducts(normalizedQuery);
     return {
       query: normalizedQuery,
@@ -218,18 +264,13 @@ export const getShoppingDecision = async (
       },
       search_query: normalizedQuery,
       ai_analysis: {
-        summary: `Showing live shopping results for "${normalizedQuery}".`,
-        key_criteria: [
-          "Verified seller offers and live Google Shopping availability",
-          "Competitive pricing across multiple retail stores",
-          "Real customer review scores and rating distributions",
-        ],
-        budget_verdict: "Live pricing from Google Shopping.",
-        top_pick_reason: products[0]?.name
-          ? `"${products[0].name}" is the top match from live results.`
-          : "",
+        summary: "",
+        key_criteria: [],
+        budget_verdict: "",
+        top_pick_reason: "",
+        analysis_source: "search_only",
       },
-      top_recommendations: products.slice(0, 5),
+      top_recommendations: [],
       all_products: products,
       total_found: products.length,
     };

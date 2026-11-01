@@ -1,78 +1,50 @@
-import { forwardRef, type HTMLAttributes } from "react";
+import { useState } from "react";
+import { ImageOff } from "lucide-react";
+import { cn } from "../../utils/cn";
 
-import type { ProductImageAspect } from "@/components/product/types";
-import type { ComponentSize } from "@/components/ui/types";
-import { cn } from "@/utils/cn";
-
-const aspectClasses: Record<ProductImageAspect, string> = {
-  square: "product-image-square",
-  portrait: "product-image-portrait",
-  landscape: "product-image-landscape",
-};
-
-const sizeClasses: Record<Exclude<ComponentSize, "xs" | "xl">, string> = {
-  sm: "product-image-sm",
-  md: "product-image-md",
-  lg: "product-image-lg",
-};
-
-export interface ProductImageProps extends HTMLAttributes<HTMLDivElement> {
-  src?: string;
+interface ProductImageProps {
+  src: string | null | undefined;
   alt: string;
-  aspect?: ProductImageAspect;
-  size?: Exclude<ComponentSize, "xs" | "xl">;
-  placeholderColor?: string;
-  placeholderLabel?: string;
-  loading?: "lazy" | "eager";
+  className?: string;
+  imgClassName?: string;
+  eager?: boolean;
 }
 
-export const ProductImage = forwardRef<HTMLDivElement, ProductImageProps>(
-  (
-    {
-      src,
-      alt,
-      aspect = "square",
-      size = "md",
-      placeholderColor = "#ececee",
-      placeholderLabel,
-      loading = "lazy",
-      className,
-      ...props
-    },
-    ref,
-  ) => {
-    const initial = placeholderLabel ?? alt.slice(0, 2).toUpperCase();
+/**
+ * Retailer images usually sit on white. Multiply-blending them onto a soft
+ * well lets every product share the same calm backdrop.
+ */
+export const ProductImage = ({ src, alt, className, imgClassName, eager = false }: ProductImageProps) => {
+  const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const showImage = Boolean(src) && !failed;
 
-    return (
-      <div
-        ref={ref}
-        className={cn(
-          "product-image",
-          aspectClasses[aspect],
-          sizeClasses[size],
-          className,
-        )}
-        {...props}
-      >
-        {src && src.trim() !== "" ? (
+  return (
+    <div className={cn("relative flex items-center justify-center overflow-hidden bg-well", className)}>
+      {showImage ? (
+        <>
+          {!loaded && <div className="skeleton absolute inset-0 rounded-none" aria-hidden="true" />}
           <img
-            src={src}
+            src={src ?? undefined}
             alt={alt}
-            loading={loading}
-            className="product-image-img"
+            loading={eager ? "eager" : "lazy"}
+            decoding="async"
+            referrerPolicy="no-referrer"
+            onLoad={() => setLoaded(true)}
+            onError={() => setFailed(true)}
+            className={cn(
+              "h-full w-full object-contain mix-blend-multiply transition-[opacity,transform] duration-700 ease-[var(--ease-out-expo)]",
+              loaded ? "opacity-100" : "opacity-0",
+              imgClassName,
+            )}
           />
-        ) : (
-          <div
-            className="product-image-placeholder"
-            style={{ backgroundColor: placeholderColor }}
-            aria-hidden="true"
-          >
-            <span className="product-image-placeholder-label">{initial}</span>
-          </div>
-        )}
-      </div>
-    );
-  },
-);
-
-ProductImage.displayName = "ProductImage";
+        </>
+      ) : (
+        <div className="flex flex-col items-center gap-2 text-faint">
+          <ImageOff className="h-6 w-6" strokeWidth={1.5} />
+          <span className="text-[11px]">Image unavailable</span>
+        </div>
+      )}
+    </div>
+  );
+};

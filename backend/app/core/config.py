@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     cors_origin_regex: str = r"^https://.*\.vercel\.app$"
     openrouter_api_key: str = ""
     openrouter_model: str = "openai/gpt-4o-mini"
+    # Comma-separated models OpenRouter falls back to, in order, when the
+    # primary model is unavailable or rate-limited.
+    openrouter_fallback_models: str = ""
     openrouter_site_url: str = "http://localhost:5173"
     openrouter_app_name: str = "ShopMind AI"
     openrouter_timeout_seconds: float = 25.0
@@ -40,6 +43,12 @@ class Settings(BaseSettings):
         if prod_vercel not in origins:
             origins.append(prod_vercel)
         return origins
+
+    def get_openrouter_models(self, primary: str | None = None) -> list[str]:
+        """Return the primary model followed by distinct fallback models."""
+        models = [(primary or self.openrouter_model).strip()]
+        models += [model.strip() for model in self.openrouter_fallback_models.split(",")]
+        return list(dict.fromkeys(model for model in models if model))
 
     @field_validator("debug", mode="before")
     @classmethod

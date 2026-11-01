@@ -20,6 +20,12 @@ class OpenRouterError(RuntimeError):
     """Raised when OpenRouter cannot return a usable chat response."""
 
 
+def _fallback_routing(primary: str) -> dict[str, list[str]] | None:
+    """OpenRouter's ``models`` list retries the request on each fallback in order."""
+    models = settings.get_openrouter_models(primary)
+    return {"models": models} if len(models) > 1 else None
+
+
 class OpenRouterProvider:
     """Stateless OpenRouter provider using its OpenAI-compatible API."""
 
@@ -64,6 +70,7 @@ class OpenRouterProvider:
             response = client.chat.completions.create(
                 model=self.model,
                 messages=cast(list[dict[str, str]], messages),
+                extra_body=_fallback_routing(self.model),
             )
         except Exception as error:
             raise OpenRouterError(f"Unable to get a response from OpenRouter: {error}") from error
@@ -103,8 +110,10 @@ class OpenRouterClient(OpenRouterProvider):
             "messages": messages,
             "stream": True,
             "temperature": 0.7,
-            "max_tokens": 600,
+            # Reasoning models spend part of this budget before visible text.
+            "max_tokens": 1200,
         }
+        payload.update(_fallback_routing(settings.openrouter_model) or {})
 
         try:
             timeout = httpx.Timeout(90.0, connect=15.0)

@@ -1,219 +1,108 @@
-import React from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ChevronRight, AlertTriangle } from "lucide-react";
-import Navbar from "../components/common/Navbar";
-import Footer from "../components/common/Footer";
-import PageBackground from "../components/common/PageBackground";
-import SubcategoryIcon from "../components/category/SubcategoryIcon";
-import { findMainCategory } from "../data/categoryData";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft, ArrowRight, Compass, Sparkles } from "lucide-react";
+import { findMainCategory, MAIN_CATEGORIES } from "../data/categoryData";
+import { getMainVisual, getSubIcon } from "../components/category/categoryVisuals";
+import { Reveal } from "../components/ui/Reveal";
+import { StateView } from "../components/ui/StateView";
+import { buttonClasses } from "../components/ui/Button";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
-/**
- * Level 2 — Subcategories page.
- * Route: /categories/:mainCategory
- */
-const SubCategories: React.FC = () => {
+const SubCategories = () => {
   const { mainCategory = "" } = useParams<{ mainCategory: string }>();
   const navigate = useNavigate();
-
   const category = findMainCategory(mainCategory);
+  useDocumentTitle(category?.label ?? "Collection");
+
+  if (!category) {
+    return (
+      <div className="container-x pb-24 pt-32">
+        <StateView
+          icon={<Compass className="h-6 w-6" />}
+          title="We couldn't find that collection"
+          description="It may have moved. Every collection is listed on the collections page."
+          actions={
+            <Link to="/categories" className={buttonClasses()}>
+              View all collections
+            </Link>
+          }
+        />
+      </div>
+    );
+  }
+
+  const visual = getMainVisual(category.slug);
+  const Icon = visual.icon;
+  const others = MAIN_CATEGORIES.filter((item) => item.slug !== category.slug).slice(0, 6);
 
   return (
-    <PageBackground>
-      <Navbar />
-
-      <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        {/* Back button */}
-        <button
-          type="button"
-          onClick={() => navigate("/categories")}
-          className="mb-6 inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition-all duration-150 hover:-translate-y-px"
-          style={{
-            background: "#FFFFFF",
-            borderColor: "#E8E2D9",
-            color: "#5A5248",
-            boxShadow: "0 1px 4px rgba(13,11,30,0.06)",
-          }}
-        >
-          <ArrowLeft className="h-4 w-4" />
-          All Categories
-        </button>
-
-        {/* Breadcrumb */}
-        <nav
-          aria-label="Breadcrumb"
-          className="mb-8 flex flex-wrap items-center gap-1.5 text-xs"
-          style={{ color: "#A89F95" }}
-        >
-          <button
-            type="button"
-            onClick={() => navigate("/categories")}
-            className="transition-colors hover:underline"
-            style={{ color: "#7C3AED" }}
-          >
-            Categories
-          </button>
-          <ChevronRight className="h-3 w-3" />
-          <span className="font-semibold" style={{ color: "#0D0B1E" }}>
-            {category ? `${category.emoji} ${category.label}` : mainCategory}
-          </span>
-        </nav>
-
-        {/* Unknown category */}
-        {!category && (
-          <div
-            className="flex flex-col items-center justify-center rounded-3xl border py-20 text-center"
-            style={{
-              background: "#FFF5F5",
-              borderColor: "#FECACA",
-              boxShadow: "0 4px 20px rgba(220,38,38,0.08)",
-            }}
-          >
-            <AlertTriangle className="h-8 w-8 text-red-400" />
-            <p className="mt-4 text-sm font-semibold" style={{ color: "#DC2626" }}>
-              Category not found.
-            </p>
-            <button
-              type="button"
-              onClick={() => navigate("/categories")}
-              className="mt-4 rounded-xl px-5 py-2 text-sm font-semibold text-white transition-all hover:-translate-y-px"
-              style={{ background: "linear-gradient(135deg, #7C3AED, #6D28D9)" }}
-            >
-              Back to Categories
-            </button>
+    <div className="pb-24">
+      <section className="relative overflow-hidden pb-16 pt-28 sm:pt-32" style={{ background: `linear-gradient(160deg, ${visual.from}, ${visual.to} 70%, var(--color-paper))` }}>
+        <div className="dot-grid pointer-events-none absolute inset-0 opacity-60 [mask-image:linear-gradient(to_bottom,#000,transparent)]" aria-hidden="true" />
+        <Icon className="pointer-events-none absolute -right-10 top-16 h-80 w-80 text-ink/[0.07] sm:right-10" strokeWidth={0.75} aria-hidden="true" />
+        <div className="container-x relative">
+          <Link to="/categories" className="group inline-flex items-center gap-2 text-sm text-ink-2 hover:text-ink">
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" /> All collections
+          </Link>
+          <div className="rise-in mt-10 max-w-2xl">
+            <p className="eyebrow text-ink/50">Collection · {category.subcategories.length} aisles</p>
+            <h1 className="mt-4 text-[2.5rem] font-semibold leading-[1.02] tracking-[-0.045em] text-ink sm:text-[4rem]">{category.label}</h1>
+            <p className="mt-4 text-[15.5px] leading-relaxed text-ink-2">{category.description}</p>
           </div>
-        )}
+        </div>
+      </section>
 
-        {/* Subcategory grid */}
-        {category && (
-          <>
-            {/* Page header */}
-            <div className="mb-8">
-              <div className="flex items-center gap-3 mb-2">
-                <span
-                  className="flex h-12 w-12 items-center justify-center rounded-2xl text-2xl"
-                  style={{ background: "linear-gradient(135deg, #EDE9FE, #FFF7ED)" }}
+      <section className="container-x -mt-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+          {category.subcategories.map((sub, index) => {
+            const SubIcon = getSubIcon(sub.slug, category.slug);
+            return (
+              <Reveal key={sub.slug} index={index % 8}>
+                <Link
+                  to={`/categories/${category.slug}/${sub.slug}`}
+                  className="group card flex h-full flex-col p-5 transition-[transform,box-shadow,border-color] duration-500 ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:border-line-strong hover:shadow-lift sm:p-6"
                 >
-                  {category.emoji}
-                </span>
-                <div>
-                  <p
-                    className="text-xs font-bold uppercase tracking-widest mb-0.5"
-                    style={{ color: "#7C3AED" }}
+                  <span
+                    className="flex h-12 w-12 items-center justify-center rounded-2xl text-ink transition-transform duration-500 ease-[var(--ease-out-expo)] group-hover:-rotate-6 group-hover:scale-110"
+                    style={{ background: `linear-gradient(140deg, ${visual.from}, ${visual.to})` }}
                   >
-                    {category.label}
-                  </p>
-                  <h1
-                    className="text-2xl sm:text-3xl font-bold tracking-tight"
-                    style={{ color: "#0D0B1E" }}
-                  >
-                    Shop by Subcategory
-                  </h1>
-                </div>
-              </div>
-            </div>
+                    <SubIcon className="h-5 w-5" strokeWidth={1.6} />
+                  </span>
+                  <h2 className="mt-8 text-[15.5px] font-semibold tracking-tight text-ink">{sub.label}</h2>
+                  <span className="mt-1 inline-flex items-center gap-1 text-[12.5px] text-muted transition-colors group-hover:text-jade-700">
+                    Browse live listings <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                  </span>
+                </Link>
+              </Reveal>
+            );
+          })}
+        </div>
 
-            {/* Decorative divider */}
-            <svg
-              aria-hidden="true"
-              className="mb-8 w-full opacity-25"
-              height="2"
-              viewBox="0 0 800 2"
-              preserveAspectRatio="none"
-            >
-              <line
-                x1="0" y1="1" x2="800" y2="1"
-                stroke="url(#divGrad2)"
-                strokeWidth="2"
-                strokeDasharray="4 6"
-                strokeLinecap="round"
-              />
-              <defs>
-                <linearGradient id="divGrad2">
-                  <stop offset="0%" stopColor="#7C3AED" stopOpacity="0" />
-                  <stop offset="40%" stopColor="#7C3AED" stopOpacity="1" />
-                  <stop offset="100%" stopColor="#7C3AED" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-            </svg>
+        <Reveal className="mt-6 flex flex-col items-start gap-4 rounded-3xl bg-night p-6 text-white sm:flex-row sm:items-center sm:justify-between sm:p-8">
+          <div>
+            <p className="text-lg font-medium tracking-tight">Not sure which aisle?</p>
+            <p className="mt-1 text-sm text-white/55">Describe what you need and ShopMind will find the right products across {category.label.toLowerCase()}.</p>
+          </div>
+          <button type="button" onClick={() => navigate("/?focus=search")} className={buttonClasses("light", "md")}>
+            <Sparkles className="h-4 w-4 text-jade-600" /> Ask ShopMind
+          </button>
+        </Reveal>
+      </section>
 
-            {category.subcategories.length === 0 ? (
-              <div
-                className="flex flex-col items-center justify-center rounded-3xl border py-16 text-center"
-                style={{
-                  background: "linear-gradient(135deg, #FFFFFF, #F8F5FF)",
-                  borderColor: "#E8E2D9",
-                }}
-              >
-                <span className="text-4xl mb-3">📂</span>
-                <p className="text-base font-semibold" style={{ color: "#0D0B1E" }}>
-                  No subcategories currently listed for {category.label}
-                </p>
-                <p className="mt-1 text-sm text-[#7A7068]">
-                  Check back soon or explore our other live shopping departments.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => navigate("/categories")}
-                  className="mt-5 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-px"
-                  style={{ background: "linear-gradient(135deg, #7C3AED, #6D28D9)" }}
-                >
-                  Browse All Categories
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                {category.subcategories.map((sub) => (
-                  <button
-                    key={sub.slug}
-                    type="button"
-                    onClick={() => navigate(`/categories/${category.slug}/${sub.slug}`)}
-                    className="group flex flex-col items-start gap-2.5 rounded-2xl border p-4 text-left transition-all duration-200 hover:-translate-y-1"
-                    style={{
-                      background: "linear-gradient(135deg, #FFFFFF, #FDFAF7)",
-                      border: "1.5px solid #E8E2D9",
-                      boxShadow: "0 1px 4px rgba(13,11,30,0.04)",
-                    }}
-                    onMouseEnter={(e) => {
-                      const el = e.currentTarget as HTMLButtonElement;
-                      el.style.borderColor = "#C4B5FD";
-                      el.style.boxShadow = "0 6px 20px rgba(124,58,237,0.12)";
-                    }}
-                    onMouseLeave={(e) => {
-                      const el = e.currentTarget as HTMLButtonElement;
-                      el.style.borderColor = "#E8E2D9";
-                      el.style.boxShadow = "0 1px 4px rgba(13,11,30,0.04)";
-                    }}
-                  >
-                    {/* Visual icon inside light-purple circular/rounded container */}
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-[#7C3AED] transition-transform duration-200 group-hover:scale-105 group-hover:bg-purple-100">
-                      <SubcategoryIcon slug={sub.slug} categorySlug={category.slug} className="h-5 w-5" />
-                    </div>
-
-                    <h2
-                      className="text-sm font-semibold leading-tight transition-colors group-hover:text-purple-700"
-                      style={{ color: "#0D0B1E" }}
-                    >
-                      {sub.label}
-                    </h2>
-
-                    <span
-                      className="mt-auto text-[11px] font-medium transition-colors group-hover:text-purple-600"
-                      style={{ color: "#A89F95" }}
-                    >
-                      Live products →
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      <Footer />
-    </PageBackground>
+      <section className="container-x mt-24">
+        <p className="eyebrow text-muted">Other collections</p>
+        <div className="mt-5 flex flex-wrap gap-2">
+          {others.map((item) => {
+            const OtherIcon = getMainVisual(item.slug).icon;
+            return (
+              <Link key={item.slug} to={`/categories/${item.slug}`} className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2 text-[13px] text-ink-2 transition-colors hover:border-ink hover:text-ink">
+                <OtherIcon className="h-3.5 w-3.5" /> {item.label}
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+    </div>
   );
 };
 
 export default SubCategories;
-

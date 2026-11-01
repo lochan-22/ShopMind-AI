@@ -1,322 +1,396 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { Sparkles, Search, ArrowRight, Mic } from "lucide-react";
-import Navbar from "../components/common/Navbar";
-import Footer from "../components/common/Footer";
-import PageBackground from "../components/common/PageBackground";
-import ShopMindText from "../components/common/ShopMindText";
-import HeroVisual from "../components/home/HeroVisual";
-import FeatureStrip from "../components/home/FeatureStrip";
-import ShopByCategory from "../components/home/ShopByCategory";
-import TrendingProducts from "../components/home/TrendingProducts";
-import HowItWorks from "../components/home/HowItWorks";
-import Features from "../components/home/Features";
-import Comparison from "../components/home/Comparison";
-import Categories from "../components/home/Categories";
-import Workflow from "../components/home/Workflow";
-import FutureFeatures from "../components/home/FutureFeatures";
-import CTA from "../components/home/CTA";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
-  WatercolorSplash,
-  PaintArches,
-  EyeglassesDoodle,
-} from "../components/common/DecorativeAnnotations";
+  ArrowRight,
+  ArrowUpRight,
+  BadgeCheck,
+  Compass,
+  Filter,
+  Gauge,
+  ListFilter,
+  MessagesSquare,
+  Radar,
+  Scale,
+  ScanSearch,
+  ShieldCheck,
+  Sparkles,
+  Trophy,
+  Wallet,
+} from "lucide-react";
+import { SearchCommand } from "../components/search/SearchCommand";
+import { CollectionTile } from "../components/category/CollectionTile";
+import { Reveal } from "../components/ui/Reveal";
+import { Accent, SectionHeading } from "../components/ui/SectionHeading";
+import { buttonClasses } from "../components/ui/Button";
+import { TypingIndicator } from "../agent/components/TypingIndicator";
+import { LogoMark } from "../components/brand/Logo";
+import { MAIN_CATEGORIES } from "../data/categoryData";
+import { useAgent } from "../agent/AgentContext";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import { cn } from "../utils/cn";
 
-const Home: React.FC = () => {
+const HERO_CHIPS = [
+  "Camera phone under ₹40,000",
+  "RTX gaming laptop under ₹80,000",
+  "ANC headphones for travel",
+  "Air fryer for a family of four",
+];
+
+const STEPS = [
+  {
+    icon: ScanSearch,
+    title: "Understand",
+    body: "Your words become a brief: category, budget, must-haves, nice-to-haves and what matters most.",
+  },
+  {
+    icon: Radar,
+    title: "Retrieve",
+    body: "Live Google Shopping listings are pulled in real time, with current prices, sellers and links.",
+  },
+  {
+    icon: Filter,
+    title: "Verify",
+    body: "Over-budget, off-category and unverified listings are removed. Duplicates collapse into one.",
+  },
+  {
+    icon: Trophy,
+    title: "Rank & explain",
+    body: "Every candidate earns a transparent score, and the strongest five come with a clear rationale.",
+  },
+];
+
+const INSIGHT_SECTIONS = [
+  { icon: Sparkles, title: "The short answer", body: "A direct reply to what you asked, in a sentence or two." },
+  { icon: Compass, title: "Market landscape", body: "What this price segment typically offers right now." },
+  { icon: Gauge, title: "Key decision criteria", body: "The specs that genuinely matter for your use." },
+  { icon: Scale, title: "Market trade-offs", body: "Where products compromise, so nothing surprises you." },
+  { icon: Trophy, title: "Final verdict", body: "A reasoned top pick and runner-up from real listings." },
+  { icon: Wallet, title: "Budget verdict", body: "Whether the shortlist truly fits the number you gave." },
+];
+
+const SCORE_PARTS = [
+  { label: "Fit to your request", points: 30, tone: "bg-jade-400" },
+  { label: "Budget & value", points: 25, tone: "bg-sky-aurora" },
+  { label: "Verified specs", points: 25, tone: "bg-iris" },
+  { label: "Reputation", points: 15, tone: "bg-jade-200" },
+  { label: "Listing quality", points: 5, tone: "bg-white/60" },
+];
+
+const PRINCIPLES = [
+  {
+    icon: BadgeCheck,
+    title: "Facts come from listings",
+    body: "Names, prices, sellers and links are taken from retrieved listings. The model explains — it never invents a spec or a price.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Hard limits stay hard",
+    body: "Your budget, category and required features are enforced before ranking. No amount of persuasive text overrides them.",
+  },
+  {
+    icon: ListFilter,
+    title: "Clear about its sources",
+    body: "When a language model writes the analysis you'll see “Powered by OpenRouter”. When it can't, you'll see “Market Evaluation”.",
+  },
+];
+
+const Hero = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const [query, setQuery] = useState<string>("");
-  const [heroVoiceFeedback, setHeroVoiceFeedback] = useState<boolean>(false);
-
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    if (params.get("focus") === "search" || (location.state as { focusSearch?: boolean } | null)?.focusSearch) {
-      const timer = setTimeout(() => {
-        if (searchInputRef.current) {
-          searchInputRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-          searchInputRef.current.focus();
-        }
-      }, 120);
-      return () => clearTimeout(timer);
-    }
-  }, [location.search, location.state]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!query.trim()) return;
-    navigate(`/search?q=${encodeURIComponent(query.trim())}`);
-  };
-
-  const handleHeroVoiceInput = () => {
-    // Reusable voice-input entry point for hero shopping queries (wired to speech recognition in future phase)
-    console.info("[ShopMind AI] Hero voice shopping query triggered. Speech recognition pending implementation.");
-    setHeroVoiceFeedback(true);
-    setTimeout(() => setHeroVoiceFeedback(false), 2200);
-  };
+  const [params] = useSearchParams();
+  const search = (query: string) => navigate(`/search?q=${encodeURIComponent(query)}`);
 
   return (
-    <PageBackground>
-      <Navbar />
+    <section className="noise relative isolate overflow-hidden bg-night pb-24 pt-36 text-white sm:pb-32 sm:pt-44">
+      {/* Aurora field */}
+      <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
+        <div className="grid-fade absolute inset-0" />
+        <div className="animate-float-a absolute -left-[10%] top-[8%] h-[30rem] w-[30rem] rounded-full bg-jade-500/30 blur-[110px]" />
+        <div className="animate-float-b absolute right-[-8%] top-[-4%] h-[34rem] w-[34rem] rounded-full bg-iris/25 blur-[120px]" />
+        <div className="animate-float-c absolute bottom-[-30%] left-[30%] h-[28rem] w-[40rem] rounded-full bg-sky-aurora/20 blur-[120px]" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-night" />
+      </div>
 
-      {/* ── 1. HERO SECTION ── */}
-      <section className="relative w-full overflow-hidden pt-5 pb-8 sm:pt-12 sm:pb-20 bg-section-hero border-b border-[#E8E2D9]/60">
-        {/* Subtle peach atmospheric gradient (bottom-left) */}
-        <div
-          className="pointer-events-none absolute -bottom-24 -left-20 h-96 w-96 rounded-full opacity-35 blur-3xl select-none"
-          style={{
-            background: "radial-gradient(circle, #FED7AA 0%, #FB923C 45%, transparent 70%)",
-          }}
-          aria-hidden="true"
-        />
-
-        {/* Subtle purple glow (top-right) */}
-        <div
-          className="pointer-events-none absolute -top-20 -right-20 h-96 w-96 rounded-full opacity-30 blur-3xl select-none"
-          style={{
-            background: "radial-gradient(circle, #DDD6FE 0%, #A855F7 45%, transparent 70%)",
-          }}
-          aria-hidden="true"
-        />
-
-        {/* Watercolor brush stroke washes */}
-        <WatercolorSplash type="top-left" />
-        <WatercolorSplash type="top-right" />
-
-        {/* Eyeglasses doodle top-left */}
-        <div className="absolute top-8 left-8 sm:left-14 hidden xl:block pointer-events-none">
-          <EyeglassesDoodle />
+      <div className="container-x relative">
+        <div className="mx-auto max-w-4xl text-center">
+          <p className="rise-in mx-auto inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-1.5 text-[12px] text-white/70 backdrop-blur">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="pulse-ring absolute inset-0 rounded-full bg-jade-300" />
+              <span className="relative h-1.5 w-1.5 rounded-full bg-jade-300" />
+            </span>
+            Live listings · AI analysis · Prices in ₹
+          </p>
+          <h1
+            className="rise-in mt-7 text-[2.7rem] font-semibold leading-[1.02] tracking-[-0.045em] sm:text-[4.4rem] lg:text-[5.3rem]"
+            style={{ ["--rise-index" as string]: 1 }}
+          >
+            Tell us what you need.
+            <br />
+            <Accent aurora>We'll find what's worth buying.</Accent>
+          </h1>
+          <p
+            className="rise-in mx-auto mt-6 max-w-2xl text-[15.5px] leading-relaxed text-white/60 sm:text-lg"
+            style={{ ["--rise-index" as string]: 2 }}
+          >
+            ShopMind reads your request, checks live listings, sets aside what doesn't fit and explains its five strongest picks — with real
+            prices and no invented specs.
+          </p>
         </div>
 
-        {/* Peach terracotta curved paint arches */}
-        <div className="absolute bottom-4 left-2 sm:left-6 hidden xl:block pointer-events-none">
-          <PaintArches />
-        </div>
-
-        {/* Thin curved technical lines & abstract geometric overlays */}
-        <svg
-          className="pointer-events-none absolute inset-0 h-full w-full opacity-15 select-none"
-          viewBox="0 0 1440 650"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden="true"
-        >
-          <path
-            d="M-50 480 C 250 450, 400 580, 750 510 C 1100 440, 1300 530, 1500 480"
-            stroke="#7C3AED"
-            strokeWidth="1.2"
-            strokeDasharray="6 6"
-          />
-          <path
-            d="M100 20 C 350 90, 500 30, 850 110 C 1150 180, 1350 60, 1500 120"
-            stroke="#F97316"
-            strokeWidth="1"
-            strokeDasharray="4 8"
-          />
-          <circle cx="280" cy="120" r="18" stroke="#7C3AED" strokeWidth="0.8" strokeDasharray="2 3" />
-          <line x1="270" y1="120" x2="290" y2="120" stroke="#7C3AED" strokeWidth="1" />
-          <line x1="280" y1="110" x2="280" y2="130" stroke="#7C3AED" strokeWidth="1" />
-
-          <circle cx="1250" cy="240" r="28" stroke="#A855F7" strokeWidth="0.8" strokeDasharray="3 4" />
-          <circle cx="1250" cy="240" r="14" stroke="#F97316" strokeWidth="0.6" />
-        </svg>
-
-        {/* Hero Container */}
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 items-center gap-6 sm:gap-12 lg:grid-cols-12 lg:gap-8">
-
-            {/* LEFT / CENTER: Text, Search, Flow */}
-            <div className="flex flex-col items-start text-left lg:col-span-7">
-              {/* Companion Badge */}
-              <div
-                className="mb-3 sm:mb-5 inline-flex items-center gap-2 rounded-full border border-purple-200 bg-white/85 px-4 py-1.5 text-xs font-semibold text-[#5A5248] shadow-sm backdrop-blur-md"
+        <div className="rise-in mx-auto mt-10 max-w-3xl" style={{ ["--rise-index" as string]: 3 }}>
+          <SearchCommand variant="hero" animatedPlaceholder autoFocus={params.get("focus") === "search"} onSubmit={search} />
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+            <span className="mr-1 text-[12px] text-white/40">Try</span>
+            {HERO_CHIPS.map((chip) => (
+              <button
+                key={chip}
+                type="button"
+                onClick={() => search(chip)}
+                className="rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-1.5 text-[12.5px] text-white/70 transition-[background-color,border-color,color] duration-300 hover:border-white/25 hover:bg-white/[0.09] hover:text-white"
               >
-                <Sparkles className="h-3.5 w-3.5 text-[#7C3AED]" />
-                <span>Your AI Shopping Companion</span>
-              </div>
-
-              {/* Strong ShopMind AI Headline */}
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-[#0D0B1E] leading-[1.14] sm:leading-[1.12]">
-                Shop Smarter <br />
-                with <ShopMindText />
-              </h1>
-
-              {/* Supporting Description */}
-              <p className="mt-3 sm:mt-4 max-w-xl text-sm sm:text-base leading-relaxed text-[#7A7068]">
-                Describe what you're looking for. <ShopMindText /> searches
-                live products, compares seller deals, and helps you find the right option.
-              </p>
-
-              {/* Natural-Language Shopping Search Field & Buttons */}
-              {/* Search label */}
-              <p className="mt-5 sm:mt-8 text-xs font-bold uppercase tracking-widest text-[#8E8478]">
-                What are you shopping for?
-              </p>
-
-              <form
-                onSubmit={handleSubmit}
-                id="hero-search"
-                className="mt-3 flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:max-w-[700px] lg:max-w-[740px]"
-              >
-                {/* Search input field */}
-                <div className="relative flex-1 w-full">
-                  <Search
-                    className="pointer-events-none absolute left-3.5 sm:left-4.5 top-1/2 h-5 w-5 -translate-y-1/2 text-[#A89F95]"
-                  />
-                  <input
-                    ref={searchInputRef}
-                    id="hero-search-input"
-                    type="text"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="What are you looking to buy?"
-                    className="h-12 sm:h-[64px] w-full rounded-xl sm:rounded-2xl border border-[#E4DED5] bg-white pl-11 sm:pl-12 pr-4 text-[15px] sm:text-[17px] font-medium text-[#0D0B1E] placeholder:text-[#A89F95] shadow-sm outline-none transition-all focus:border-[#7C3AED] focus:ring-2 focus:ring-purple-200/60"
-                  />
-                </div>
-
-                {/* Actions row: clean row on mobile, inline direct siblings on desktop */}
-                <div className="flex w-full items-center gap-2.5 sm:w-auto sm:contents">
-                  {/* Hero voice input button */}
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={handleHeroVoiceInput}
-                      title="Search by voice"
-                      aria-label="Search by voice"
-                      className="group flex h-12 w-12 min-h-[48px] min-w-[48px] sm:h-[64px] sm:w-[64px] flex-shrink-0 items-center justify-center rounded-xl sm:rounded-2xl border border-[#E4DED5] bg-white text-[#7C3AED] shadow-sm transition-all hover:border-[#C4B5FD] hover:bg-purple-50/70 hover:shadow-md active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]"
-                    >
-                      <Mic className="h-5 w-5 sm:h-6 sm:w-6 transition-transform duration-200 group-hover:scale-110" />
-                    </button>
-
-                    {/* Temporary feedback tooltip */}
-                    {heroVoiceFeedback && (
-                      <span className="pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-[#0D0B1E]/95 px-2.5 py-1 text-[11px] font-semibold text-white shadow-md backdrop-blur-sm">
-                        Voice search coming soon
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Primary search submit button */}
-                  <button
-                    type="submit"
-                    disabled={!query.trim()}
-                    className="inline-flex h-12 min-h-[48px] sm:h-[64px] flex-1 sm:flex-initial items-center justify-center gap-2 rounded-xl sm:rounded-2xl px-6 sm:px-7 text-[15px] sm:text-base font-bold text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 flex-shrink-0 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
-                    style={{
-                      background: "linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%)",
-                      boxShadow: "0 6px 18px rgba(124, 58, 237, 0.32)",
-                    }}
-                  >
-                    <span>Search</span>
-                    <ArrowRight className="h-4 w-4" />
-                  </button>
-                </div>
-              </form>
-
-              {/* Shopping Workflow Indicator */}
-              {/* Mobile 2-line layout (< sm) */}
-              <div
-                data-workflow-pill="mobile"
-                className="mt-4 flex sm:hidden flex-col gap-1.5 w-full max-w-[340px] rounded-2xl border border-[#E8E2D9] bg-white/85 p-2.5 text-[11px] font-semibold text-[#5A5248] backdrop-blur-sm shadow-sm"
-              >
-                <div className="flex items-center justify-between px-1">
-                  <div className="flex items-center gap-1.5">
-                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-purple-500" />
-                    <span>User Intent</span>
-                  </div>
-                  <span className="text-[#7C3AED] font-bold">→</span>
-                  <div className="flex items-center gap-1.5">
-                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-indigo-500" />
-                    <span>AI Search</span>
-                  </div>
-                </div>
-                <div className="h-px w-full bg-[#E8E2D9]/60" />
-                <div className="flex items-center justify-between px-1">
-                  <div className="flex items-center gap-1.5">
-                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-purple-600" />
-                    <span>Live Comparison</span>
-                  </div>
-                  <span className="text-[#7C3AED] font-bold">→</span>
-                  <div className="flex items-center gap-1.5">
-                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-orange-500" />
-                    <span className="font-bold text-[#EA580C]">Best Offer</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Desktop single inline pill (sm+) */}
-              <div
-                data-workflow-pill="desktop"
-                className="mt-6 hidden sm:inline-flex items-center gap-2 rounded-full border border-[#E8E2D9] bg-white/75 px-4 py-1.5 text-[11px] font-semibold text-[#5A5248] backdrop-blur-sm shadow-sm"
-              >
-                <span>User Intent</span>
-                <span className="text-[#7C3AED]">→</span>
-                <span>AI Search</span>
-                <span className="text-[#7C3AED]">→</span>
-                <span>Live Comparison</span>
-                <span className="text-[#7C3AED]">→</span>
-                <span className="font-bold text-[#EA580C]">Best Offer</span>
-              </div>
-            </div>
-
-            {/* VISUAL AREA: Mascot Orb & Decorative Product Outlines */}
-            <div className="relative flex items-center justify-center lg:col-span-5">
-              <HeroVisual />
-            </div>
-
+                {chip}
+              </button>
+            ))}
           </div>
         </div>
-      </section>
 
-      {/* ── 2. FEATURE / BENEFIT STRIP (4 PREMIUM TRANSLUCENT CARDS) ── */}
-      <FeatureStrip />
+        <div className="rise-in mx-auto mt-16 grid max-w-3xl grid-cols-3 divide-x divide-white/10 rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur" style={{ ["--rise-index" as string]: 4 }}>
+          {[
+            ["Top 5", "ranked recommendations"],
+            ["100-pt", "transparent match score"],
+            ["13", "curated collections"],
+          ].map(([value, label]) => (
+            <div key={label} className="px-3 py-4 text-center sm:px-6 sm:py-5">
+              <p className="tabular text-lg font-semibold tracking-tight sm:text-2xl">{value}</p>
+              <p className="mt-0.5 text-[11px] text-white/45 sm:text-[12.5px]">{label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
 
-      {/* ── 3. SHOP BY CATEGORY SECTION (11 REAL VISUAL DEPARTMENT CARDS) ── */}
-      <ShopByCategory />
+const Collections = () => {
+  const featured = MAIN_CATEGORIES.slice(0, 9);
+  return (
+    <section className="container-x py-24 sm:py-32">
+      <SectionHeading
+        eyebrow="Collections"
+        title={
+          <>
+            Discover <Accent>curated</Accent> collections
+          </>
+        }
+        description="Thirteen collections and more than a hundred focused aisles — each one opens onto live listings, or a ranked shortlist when you want ShopMind's opinion."
+        action={
+          <Link to="/categories" className={buttonClasses("secondary", "md")}>
+            All collections <ArrowRight className="h-4 w-4" />
+          </Link>
+        }
+      />
+      <div className="mt-12 grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {featured.map((category, index) => (
+          <Reveal key={category.slug} index={index} variant="scale" className={cn(index === 0 && "sm:col-span-2 lg:row-span-2")}>
+            <CollectionTile category={category} size={index === 0 ? "large" : "default"} />
+          </Reveal>
+        ))}
+      </div>
+    </section>
+  );
+};
 
-      {/* ── 4. TRENDING PRODUCTS SECTION (6 REAL PRODUCT CARDS) ── */}
-      <TrendingProducts />
+const HowItThinks = () => (
+  <section className="border-y border-line bg-surface/60">
+    <div className="container-x py-24 sm:py-32">
+      <SectionHeading
+        align="center"
+        eyebrow="Method"
+        title={
+          <>
+            How ShopMind <Accent>thinks</Accent>
+          </>
+        }
+        description="Four deliberate steps sit between your request and your shortlist. None of them is a popularity contest."
+      />
+      <ol className="relative mt-16 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="absolute left-0 right-0 top-[2.15rem] hidden h-px bg-gradient-to-r from-transparent via-line-strong to-transparent lg:block" aria-hidden="true" />
+        {STEPS.map((step, index) => (
+          <Reveal key={step.title} index={index} className="relative">
+            <li className="card group h-full p-6 transition-[transform,box-shadow] duration-500 ease-[var(--ease-out-expo)] hover:-translate-y-1 hover:shadow-lift">
+              <div className="flex items-center justify-between">
+                <span className="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-ink text-white transition-colors duration-500 group-hover:bg-jade-600">
+                  <step.icon className="h-5 w-5" strokeWidth={1.75} />
+                </span>
+                <span className="font-display text-3xl italic text-line-strong">{String(index + 1).padStart(2, "0")}</span>
+              </div>
+              <h3 className="mt-6 text-lg font-semibold tracking-tight text-ink">{step.title}</h3>
+              <p className="mt-2 text-[14px] leading-relaxed text-muted">{step.body}</p>
+            </li>
+          </Reveal>
+        ))}
+      </ol>
+    </div>
+  </section>
+);
 
-      {/* ── 5. HOW SHOPMIND AI WORKS (5-STEP CIRCULAR TIMELINE) ── */}
-      <div id="how-it-works">
-        <HowItWorks />
+const InsightAnatomy = () => (
+  <section className="noise relative overflow-hidden bg-night text-white">
+    <div className="pointer-events-none absolute -left-32 top-1/3 h-[28rem] w-[28rem] rounded-full bg-jade-500/15 blur-[120px]" aria-hidden="true" />
+    <div className="pointer-events-none absolute -right-32 bottom-0 h-[26rem] w-[26rem] rounded-full bg-iris/15 blur-[120px]" aria-hidden="true" />
+    <div className="container-x relative py-24 sm:py-32">
+      <SectionHeading
+        tone="dark"
+        eyebrow="What you get"
+        title={
+          <>
+            Intelligent buying insights, <Accent aurora>not a wall of listings</Accent>
+          </>
+        }
+        description="Every search returns six distinct pieces of analysis, each with its own job — followed by your Top-Tier Recommendations."
+      />
+      <div className="mt-14 grid gap-px overflow-hidden rounded-3xl border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-3">
+        {INSIGHT_SECTIONS.map((section, index) => (
+          <Reveal key={section.title} index={index} className="group bg-night p-7 transition-colors duration-500 hover:bg-night-2 sm:p-8">
+            <section.icon className="h-5 w-5 text-jade-300 transition-transform duration-500 group-hover:scale-110" strokeWidth={1.75} />
+            <h3 className="mt-6 text-[17px] font-semibold tracking-tight">{section.title}</h3>
+            <p className="mt-2 text-[14px] leading-relaxed text-white/55">{section.body}</p>
+          </Reveal>
+        ))}
       </div>
 
-      {/* ── 6. CORE CAPABILITIES (8 FEATURE CARDS WITH PASTEL ACCENTS) ── */}
-      <div id="features">
-        <Features />
-      </div>
+      <Reveal className="mt-6 rounded-3xl border border-white/10 bg-white/[0.03] p-6 sm:p-8">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="eyebrow text-[10px] text-white/45">The match score</p>
+            <p className="mt-2 text-lg font-medium tracking-tight">Five weighted dimensions, one hundred points, shown on every pick.</p>
+          </div>
+          <p className="tabular font-mono text-xs text-white/40">= 100 pts</p>
+        </div>
+        <div className="mt-6 flex h-3 overflow-hidden rounded-full">
+          {SCORE_PARTS.map((part) => (
+            <span key={part.label} className={cn("h-full first:rounded-l-full last:rounded-r-full", part.tone)} style={{ width: `${part.points}%` }} />
+          ))}
+        </div>
+        <ul className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3 text-[13px] sm:grid-cols-5">
+          {SCORE_PARTS.map((part) => (
+            <li key={part.label} className="flex items-center gap-2 text-white/65">
+              <span className={cn("h-2 w-2 shrink-0 rounded-full", part.tone)} />
+              <span className="min-w-0">
+                {part.label} <span className="tabular text-white/40">· {part.points}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </Reveal>
+    </div>
+  </section>
+);
 
-      {/* ── 7. WHY SWITCH TO SHOPMIND AI (HIGH-CONTRAST COMPARISON) ── */}
-      <Comparison />
+const Principles = () => (
+  <section className="container-x py-24 sm:py-32">
+    <SectionHeading
+      eyebrow="Principles"
+      title={
+        <>
+          Built on <Accent>real</Accent> listings
+        </>
+      }
+      description="An assistant is only useful if you can trust it. These rules are enforced in the backend, not just promised here."
+    />
+    <div className="mt-12 grid gap-4 md:grid-cols-3">
+      {PRINCIPLES.map((principle, index) => (
+        <Reveal key={principle.title} index={index} className="card p-7">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-jade-50 text-jade-700 ring-1 ring-inset ring-jade-200/70">
+            <principle.icon className="h-5 w-5" strokeWidth={1.75} />
+          </span>
+          <h3 className="mt-6 text-lg font-semibold tracking-tight text-ink">{principle.title}</h3>
+          <p className="mt-2 text-[14px] leading-relaxed text-muted">{principle.body}</p>
+        </Reveal>
+      ))}
+    </div>
+  </section>
+);
 
-      {/* ── 8. SHOP ACROSS CATEGORIES (11 REAL DEPARTMENTS GRID) ── */}
-      <Categories />
+const ConciergePromo = () => {
+  const { openAgent } = useAgent();
+  return (
+    <section className="container-x pb-24 sm:pb-32">
+      <Reveal className="card grid items-center gap-10 overflow-hidden p-7 sm:p-12 lg:grid-cols-2">
+        <div>
+          <p className="eyebrow flex items-center gap-2 text-muted">
+            <MessagesSquare className="h-3.5 w-3.5" /> Concierge
+          </p>
+          <h2 className="mt-4 text-[2rem] font-semibold leading-[1.1] tracking-[-0.03em] text-ink sm:text-[2.5rem]">
+            Prefer to <Accent>talk it through?</Accent>
+          </h2>
+          <p className="mt-4 max-w-md text-[15px] leading-relaxed text-muted">
+            Ask follow-up questions, refine your budget mid-conversation, or get a plain-English explanation of a spec. Product requests return live
+            listing cards.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <button type="button" onClick={openAgent} className={buttonClasses("primary", "lg")}>
+              <Sparkles className="h-4 w-4 text-jade-300" /> Start a conversation
+            </button>
+            <Link to="/agent" className={buttonClasses("secondary", "lg")}>
+              Open full screen <ArrowUpRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+        <div className="relative rounded-[1.6rem] bg-paper p-5 ring-1 ring-inset ring-line sm:p-7" aria-hidden="true">
+          <div className="dot-grid absolute inset-0 rounded-[inherit] opacity-50" />
+          <div className="relative space-y-4">
+            <p className="ml-auto w-fit max-w-[85%] rounded-[20px] rounded-br-md bg-ink px-4 py-2.5 text-[14px] text-white">
+              Which matters more for night photos — megapixels or OIS?
+            </p>
+            <div className="flex gap-3">
+              <LogoMark className="h-7 w-7" />
+              <div className="rounded-[20px] rounded-tl-md bg-surface px-4 py-3 ring-1 ring-line">
+                <TypingIndicator />
+              </div>
+            </div>
+            <p className="ml-auto w-fit max-w-[85%] rounded-[20px] rounded-br-md bg-ink/90 px-4 py-2.5 text-[14px] text-white/90">
+              Show me Sony headphones under ₹5,000
+            </p>
+          </div>
+        </div>
+      </Reveal>
+    </section>
+  );
+};
 
-      {/* ── 9. THE SHOPMIND AI ARCHITECTURE (12-STEP PIPELINE) ── */}
-      <Workflow />
+const FinalCall = () => {
+  const navigate = useNavigate();
+  return (
+    <section className="container-x pb-24 sm:pb-32">
+      <Reveal className="noise relative overflow-hidden rounded-[2rem] bg-night px-6 py-16 text-center text-white sm:px-12 sm:py-24">
+        <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+          <div className="animate-float-a absolute -left-20 -top-20 h-80 w-80 rounded-full bg-jade-500/25 blur-[100px]" />
+          <div className="animate-float-b absolute -bottom-24 -right-10 h-80 w-80 rounded-full bg-iris/25 blur-[100px]" />
+        </div>
+        <h2 className="relative mx-auto max-w-2xl text-[2.2rem] font-semibold leading-[1.05] tracking-[-0.04em] sm:text-[3.4rem]">
+          Your next purchase, <Accent aurora>already narrowed down.</Accent>
+        </h2>
+        <p className="relative mx-auto mt-5 max-w-lg text-[15px] text-white/55">Describe it once. ShopMind does the comparing.</p>
+        <div className="relative mx-auto mt-10 max-w-2xl text-left">
+          <SearchCommand variant="hero" onSubmit={(query) => navigate(`/search?q=${encodeURIComponent(query)}`)} placeholder="What are you shopping for?" />
+        </div>
+      </Reveal>
+    </section>
+  );
+};
 
-      {/* ── 10. WHAT'S COMING NEXT (8 ROADMAP CARDS) ── */}
-      <FutureFeatures />
-
-      {/* ── 11. CALL TO ACTION BANNER (MIDNIGHT INDIGO CAPSULE) ── */}
-      <CTA />
-
-      {/* ── 12. FOOTER ── */}
-      <Footer />
-
-      {/* Gentle bounce animation for orbiting product outlines */}
-      <style>{`
-        @keyframes bounceSlow {
-          0%, 100% { transform: translateY(0px); }
-          50%       { transform: translateY(-7px); }
-        }
-        .animate-bounce-slow {
-          animation: bounceSlow 3.8s ease-in-out infinite;
-        }
-      `}</style>
-    </PageBackground>
+const Home = () => {
+  useDocumentTitle(null);
+  return (
+    <>
+      <Hero />
+      <Collections />
+      <HowItThinks />
+      <InsightAnatomy />
+      <Principles />
+      <ConciergePromo />
+      <FinalCall />
+    </>
   );
 };
 
 export default Home;
-

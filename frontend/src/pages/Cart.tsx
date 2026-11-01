@@ -1,608 +1,183 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  ArrowLeft,
-  ShoppingBag,
-  Trash2,
-  Plus,
-  Minus,
-  ExternalLink,
-  GitCompare,
-  Check,
-  X,
-  Loader2,
-} from "lucide-react";
-import Navbar from "../components/common/Navbar";
-import Footer from "../components/common/Footer";
-import PageBackground from "../components/common/PageBackground";
+import { useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowRight, ArrowUpRight, Check, GitCompareArrows, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { useCart } from "../contexts/CartContext";
-import ShopMindText from "../components/common/ShopMindText";
-import { getProductComparisonId, type Product } from "../services/productService";
+import { ProductImage } from "../components/product/ProductImage";
+import { StateView } from "../components/ui/StateView";
+import { Accent } from "../components/ui/SectionHeading";
+import { Button, buttonClasses } from "../components/ui/Button";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import { formatPrice } from "../utils/format";
+import { bestOfferUrl, isComparable, productKey, productPath, productRetailer } from "../utils/product";
+import { cn } from "../utils/cn";
 
-const formatCurrency = (amount: number): string => `₹${amount.toLocaleString("en-IN")}`;
-
-const Cart: React.FC = () => {
+const Cart = () => {
+  useDocumentTitle("Cart");
   const navigate = useNavigate();
-  const { items, subtotal, removeProduct, increaseQuantity, decreaseQuantity } = useCart();
-  const [compareMessage, setCompareMessage] = useState<string | null>(null);
-  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
-  const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false);
-  const [isComparing, setIsComparing] = useState(false);
+  const { items, totalQuantity, subtotal, unpricedCount, removeProduct, increaseQuantity, decreaseQuantity } = useCart();
+  const [selected, setSelected] = useState<string[]>([]);
+  const [message, setMessage] = useState<string | null>(null);
 
-  const handleContinueShopping = () => navigate("/");
+  const comparable = useMemo(() => items.map((item) => item.product).filter(isComparable), [items]);
+  const validSelected = selected.filter((key) => comparable.some((product) => productKey(product) === key));
 
-  // Distinct products in cart by their canonical comparison ID
-  const distinctCartProducts = useMemo(() => {
-    const seenIds = new Set<string>();
-    const distinct: Product[] = [];
-    for (const item of items) {
-      const pid = getProductComparisonId(item.product);
-      if (pid && !seenIds.has(pid)) {
-        seenIds.add(pid);
-        distinct.push(item.product);
-      }
+  const toggleSelected = (key: string) => {
+    setMessage(null);
+    setSelected((current) => (current.includes(key) ? current.filter((item) => item !== key) : [...current, key].slice(-2)));
+  };
+
+  const compare = () => {
+    const chosen =
+      comparable.length === 2 ? comparable : validSelected.map((key) => comparable.find((product) => productKey(product) === key)).filter(Boolean);
+    if (chosen.length !== 2) {
+      setMessage(comparable.length < 2 ? "Add at least two live products to compare them." : "Select two products below to compare.");
+      return;
     }
-    return distinct;
-  }, [items]);
-
-  // Keep selectedProductIds synchronized with distinct products currently in the cart
-  useEffect(() => {
-    const currentIds = distinctCartProducts.map(getProductComparisonId).filter(Boolean);
-    setSelectedProductIds((prev) => {
-      const stillValid = prev.filter((id) => currentIds.includes(id));
-      if (currentIds.length === 2) {
-        return currentIds;
-      }
-      return stillValid.slice(0, 2);
-    });
-  }, [distinctCartProducts]);
-
-  const toggleCompareSelection = (productId: string) => {
-    if (!productId) return;
-    setCompareMessage(null);
-    setSelectedProductIds((prev) => {
-      if (prev.includes(productId)) {
-        return prev.filter((id) => id !== productId);
-      }
-      if (prev.length >= 2) {
-        // Keep the second one and add the new one so user always has the last 2 selected
-        return [prev[1], productId];
-      }
-      return [...prev, productId];
+    const [a, b] = chosen;
+    navigate(`/compare?product_a=${encodeURIComponent(a!.product_id!)}&product_b=${encodeURIComponent(b!.product_id!)}`, {
+      state: { comparisonCandidates: comparable },
     });
   };
 
-  const executeComparison = (idA: string, idB: string) => {
-    if (!idA || !idB || idA === idB) {
-      setCompareMessage("Please select two distinct products to compare.");
-      return;
-    }
-    setIsComparing(true);
-    setCompareMessage(null);
-    setIsSelectionModalOpen(false);
-    navigate(
-      `/compare?product_a=${encodeURIComponent(idA)}&product_b=${encodeURIComponent(idB)}`,
-      { state: { comparisonCandidates: distinctCartProducts } }
+  if (items.length === 0) {
+    return (
+      <div className="container-x pb-24 pt-32">
+        <StateView
+          icon={<ShoppingBag className="h-6 w-6" />}
+          title="Your cart is empty"
+          description="Save products here while you decide. Purchases are completed on the retailer's site."
+          actions={
+            <>
+              <Link to="/search" className={buttonClasses()}>
+                Ask ShopMind <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link to="/categories" className={buttonClasses("secondary")}>
+                Browse collections
+              </Link>
+            </>
+          }
+        />
+      </div>
     );
-  };
+  }
 
-  const handleCompareProducts = () => {
-    if (isComparing) return;
-    if (distinctCartProducts.length < 2) {
-      setCompareMessage("Add at least 2 distinct products to your cart to compare them side-by-side.");
-      return;
-    }
-    setCompareMessage(null);
-
-    // If exactly 2 distinct products exist in cart, directly compare both
-    if (distinctCartProducts.length === 2) {
-      const idA = getProductComparisonId(distinctCartProducts[0]);
-      const idB = getProductComparisonId(distinctCartProducts[1]);
-      executeComparison(idA, idB);
-      return;
-    }
-
-    // If more than 2 products and exactly 2 are selected, compare them
-    if (selectedProductIds.length === 2) {
-      executeComparison(selectedProductIds[0], selectedProductIds[1]);
-      return;
-    }
-
-    // Otherwise, open the selection step modal so the user can choose
-    setIsSelectionModalOpen(true);
-  };
+  const showSelection = comparable.length > 2;
 
   return (
-    <PageBackground>
-      <Navbar />
-
-      <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-3">
-            <div
-              className="flex h-10 w-10 items-center justify-center rounded-2xl"
-              style={{
-                background: "linear-gradient(135deg, #7C3AED 0%, #A855F7 100%)",
-                boxShadow: "0 4px 14px rgba(124,58,237,0.35)",
-              }}
-            >
-              <ShoppingBag className="h-5 w-5 text-white" strokeWidth={2} />
-            </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: "#0D0B1E" }}>
-                Your Cart
-              </h1>
-              <p className="mt-0.5 text-sm" style={{ color: "#7A7068" }}>
-                {items.length === 0
-                  ? "Your cart is empty"
-                  : `${items.length} product${items.length === 1 ? "" : "s"} in your cart`}
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleContinueShopping}
-            className="inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition-all hover:-translate-y-px"
-            style={{
-              background: "#FFFFFF",
-              borderColor: "#E8E2D9",
-              color: "#5A5248",
-              boxShadow: "0 1px 4px rgba(13,11,30,0.06)",
-            }}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Continue Shopping
-          </button>
-        </div>
-
-        {/* Empty state */}
-        {items.length === 0 ? (
-          <div
-            className="flex flex-col items-center justify-center rounded-3xl border py-24 text-center"
-            style={{
-              background: "linear-gradient(135deg, #FFFFFF, #F8F5FF)",
-              borderColor: "#E8E2D9",
-              boxShadow: "0 4px 24px rgba(124,58,237,0.06)",
-            }}
-          >
-            <div
-              className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl"
-              style={{ background: "linear-gradient(135deg, #EDE9FE, #FFF7ED)" }}
-            >
-              <ShoppingBag className="h-8 w-8" style={{ color: "#7C3AED" }} />
-            </div>
-            <h2 className="text-xl font-bold" style={{ color: "#0D0B1E" }}>Your cart is empty</h2>
-            <p className="mt-2 text-sm" style={{ color: "#A89F95" }}>
-              Search for products and add them to your cart to review them here.
-            </p>
-            <button
-              type="button"
-              onClick={handleContinueShopping}
-              className="mt-6 inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-all hover:-translate-y-0.5"
-              style={{
-                background: "linear-gradient(135deg, #7C3AED, #6D28D9)",
-                boxShadow: "0 4px 14px rgba(124,58,237,0.35)",
-              }}
-            >
-              Discover Products
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-            {/* Cart items */}
-            <div className="space-y-4 lg:col-span-2">
-              {items.map(({ product, quantity }) => {
-                const compId = getProductComparisonId(product);
-                const isSelectedForCompare = Boolean(compId && selectedProductIds.includes(compId));
-                const isExternal = Boolean(product.product_id);
-                const targetPath = isExternal
-                  ? `/products/external/${encodeURIComponent(product.product_id!)}`
-                  : `/products/${product.id}`;
-
-                return (
-                  <div
-                    key={product.product_id ?? product.id}
-                    className="flex flex-col gap-4 rounded-2xl border p-4 transition-all sm:flex-row sm:items-center sm:justify-between sm:p-5"
-                    style={{
-                      background: "linear-gradient(135deg, #FFFFFF, #FDFAF7)",
-                      borderColor: isSelectedForCompare ? "#C4B5FD" : "#E8E2D9",
-                      boxShadow: isSelectedForCompare
-                        ? "0 4px 16px rgba(124, 58, 237, 0.12)"
-                        : "0 2px 8px rgba(13,11,30,0.05)",
-                    }}
-                  >
-                    <div className="flex items-center gap-4">
-                      {product.image ? (
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="h-20 w-20 rounded-xl object-cover"
-                          style={{ border: "1px solid #E8E2D9" }}
-                        />
-                      ) : (
-                        <div
-                          className="flex h-20 w-20 items-center justify-center rounded-xl text-lg"
-                          style={{ background: "#F8F5F0", color: "#A89F95" }}
-                        >
-                          📦
-                        </div>
-                      )}
-                      <div>
-                        <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: "#7C3AED" }}>
-                          {product.brand}
-                        </p>
-                        <h3
-                          onClick={() => navigate(targetPath, { state: { productFallback: product } })}
-                          className="cursor-pointer font-semibold transition-colors hover:underline"
-                          style={{ color: "#0D0B1E" }}
-                        >
-                          {product.name}
-                        </h3>
-                        <p className="mt-1 text-sm font-bold" style={{ color: "#7C3AED" }}>
-                          {formatCurrency(product.price)}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div
-                      className="flex items-center justify-between gap-4 border-t pt-3 sm:border-t-0 sm:pt-0"
-                      style={{ borderColor: "#E8E2D9" }}
-                    >
-                      {/* Qty controls */}
-                      <div
-                        className="flex items-center gap-2 rounded-xl border p-1"
-                        style={{ background: "#F8F5F0", borderColor: "#E8E2D9" }}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => decreaseQuantity(product.id)}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg transition hover:bg-white"
-                          style={{ color: "#5A5248" }}
-                          aria-label="Decrease quantity"
-                        >
-                          <Minus className="h-3.5 w-3.5" />
-                        </button>
-                        <span className="w-8 text-center text-sm font-bold" style={{ color: "#0D0B1E" }}>
-                          {quantity}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => increaseQuantity(product.id)}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg transition hover:bg-white"
-                          style={{ color: "#5A5248" }}
-                          aria-label="Increase quantity"
-                        >
-                          <Plus className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {/* Compare toggle button */}
-                        {distinctCartProducts.length >= 2 && compId && (
-                          <button
-                            type="button"
-                            onClick={() => toggleCompareSelection(compId)}
-                            className="inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition hover:-translate-y-px"
-                            style={{
-                              borderColor: isSelectedForCompare ? "#7C3AED" : "#E8E2D9",
-                              background: isSelectedForCompare ? "#F5F3FF" : "#FFFFFF",
-                              color: isSelectedForCompare ? "#7C3AED" : "#5A5248",
-                            }}
-                            aria-label={`Select ${product.name} for comparison`}
-                          >
-                            <span
-                              className={`flex h-4 w-4 items-center justify-center rounded-sm border transition ${
-                                isSelectedForCompare
-                                  ? "border-[#7C3AED] bg-[#7C3AED] text-white"
-                                  : "border-[#C4B5FD] bg-white"
-                              }`}
-                            >
-                              {isSelectedForCompare && <Check className="h-3 w-3" strokeWidth={3} />}
-                            </span>
-                            <span>{isSelectedForCompare ? "Selected" : "Compare"}</span>
-                          </button>
-                        )}
-
-                        <button
-                          type="button"
-                          onClick={() => navigate(targetPath, { state: { productFallback: product } })}
-                          className="inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition hover:-translate-y-px"
-                          style={{
-                            background: "#FFFFFF",
-                            borderColor: "#E8E2D9",
-                            color: "#5A5248",
-                          }}
-                        >
-                          View Deals
-                          <ExternalLink className="h-3.5 w-3.5" style={{ color: "#A89F95" }} />
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => removeProduct(product.id)}
-                          className="flex h-9 w-9 items-center justify-center rounded-xl transition hover:bg-red-50"
-                          style={{ color: "#EF4444" }}
-                          aria-label="Remove product"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Cart summary */}
-            <div>
-              <div
-                className="rounded-3xl border p-6"
-                style={{
-                  background: "linear-gradient(135deg, #FFFFFF, #F8F5FF)",
-                  borderColor: "#E8E2D9",
-                  boxShadow: "0 8px 32px rgba(124,58,237,0.08)",
-                }}
-              >
-                <h2 className="text-lg font-bold" style={{ color: "#0D0B1E" }}>Cart Summary</h2>
-
-                <div className="mt-4 space-y-3">
-                  <div className="flex items-center justify-between text-sm" style={{ color: "#7A7068" }}>
-                    <span>Selected items</span>
-                    <span className="font-semibold" style={{ color: "#0D0B1E" }}>
-                      {items.reduce((acc, item) => acc + item.quantity, 0)}
-                    </span>
-                  </div>
-                  <div className="h-px w-full" style={{ background: "#E8E2D9" }} />
-                  <div className="flex items-center justify-between text-base font-bold" style={{ color: "#0D0B1E" }}>
-                    <span>Estimated value</span>
-                    <span style={{ color: "#7C3AED" }}>{formatCurrency(subtotal)}</span>
-                  </div>
-                </div>
-
-                {/* Comparison selection helper badge */}
-                {distinctCartProducts.length >= 2 && (
-                  <div
-                    className="mt-4 rounded-2xl border p-3.5 text-xs transition-all"
-                    style={{
-                      background: selectedProductIds.length === 2 ? "#FAF5FF" : "#FDFBF7",
-                      borderColor: selectedProductIds.length === 2 ? "#C4B5FD" : "#E8E2D9",
-                    }}
-                  >
-                    <div className="flex items-center justify-between font-bold">
-                      <span style={{ color: "#0D0B1E" }}>Comparison Selection</span>
-                      <span style={{ color: selectedProductIds.length === 2 ? "#16A34A" : "#7C3AED" }}>
-                        {selectedProductIds.length === 2
-                          ? "2 of 2 ready"
-                          : `${selectedProductIds.length} of 2 selected`}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-[11px] leading-relaxed" style={{ color: "#7A7068" }}>
-                      {distinctCartProducts.length === 2
-                        ? "Both products are ready to compare side-by-side."
-                        : selectedProductIds.length === 2
-                        ? "2 products selected. Click Compare to analyze side-by-side."
-                        : "Click Compare Products to choose any 2 items from your cart."}
-                    </p>
-                  </div>
-                )}
-
-                <p className="mt-5 text-sm leading-relaxed" style={{ color: "#7A7068" }}>
-                  <ShopMindText /> helps you discover and compare products. Purchases are completed on retailer websites.
-                </p>
-
-                {compareMessage && (
-                  <p
-                    className="mt-4 rounded-xl px-3 py-2 text-sm font-medium"
-                    style={{ background: "#FFF7ED", color: "#C2410C" }}
-                  >
-                    {compareMessage}
-                  </p>
-                )}
-
-                <button
-                  type="button"
-                  disabled={isComparing}
-                  onClick={handleCompareProducts}
-                  className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
-                  style={{
-                    background: "linear-gradient(135deg, #7C3AED 0%, #A855F7 100%)",
-                    boxShadow: "0 4px 14px rgba(124,58,237,0.30)",
-                  }}
-                >
-                  {isComparing ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Loading comparison…
-                    </>
-                  ) : (
-                    <>
-                      <GitCompare className="h-4 w-4" />
-                      {distinctCartProducts.length > 2 && selectedProductIds.length === 2
-                        ? "Compare Selected (2)"
-                        : "Compare Products"}
-                    </>
-                  )}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleContinueShopping}
-                  className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border px-5 py-3 text-sm font-semibold transition-all hover:-translate-y-px"
-                  style={{
-                    background: "#FFFFFF",
-                    borderColor: "#E8E2D9",
-                    color: "#5A5248",
-                  }}
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Continue Shopping
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+    <div className="container-x pb-24 pt-32 sm:pt-40">
+      <div className="rise-in">
+        <p className="eyebrow text-muted">Cart · {totalQuantity} item{totalQuantity === 1 ? "" : "s"}</p>
+        <h1 className="mt-4 text-[2.4rem] font-semibold leading-[1.05] tracking-[-0.04em] text-ink sm:text-[3.4rem]">
+          Your <Accent>selection</Accent>
+        </h1>
+        <p className="mt-3 max-w-lg text-[15px] text-muted">Saved picks, ready to compare or buy from the retailer.</p>
       </div>
 
-      {/* Product Selection Modal for > 2 items in cart */}
-      {isSelectionModalOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="compare-modal-title"
-        >
-          <div
-            className="relative w-full max-w-2xl rounded-3xl border bg-white p-6 sm:p-8 shadow-2xl transition-all"
-            style={{ borderColor: "#E8E2D9" }}
-          >
-            <button
-              type="button"
-              onClick={() => setIsSelectionModalOpen(false)}
-              className="absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-xl text-[#7A7068] transition hover:bg-[#F3EFEA] hover:text-[#0D0B1E]"
-              aria-label="Close modal"
-            >
-              <X className="h-4 w-4" />
-            </button>
-
-            <div className="flex items-center gap-3">
-              <div
-                className="flex h-10 w-10 items-center justify-center rounded-2xl"
-                style={{ background: "linear-gradient(135deg, #EDE9FE, #DDD6FE)" }}
+      <div className="mt-12 grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px]">
+        <ul className="space-y-3">
+          {items.map(({ product, quantity }, index) => {
+            const key = productKey(product);
+            const price = formatPrice(product.price, product.currency);
+            const lineTotal = product.price != null ? formatPrice(product.price * quantity, product.currency) : null;
+            const url = bestOfferUrl(product);
+            const isChecked = validSelected.includes(key);
+            return (
+              <li
+                key={key}
+                className={cn("card rise-in flex gap-4 p-3 transition-[border-color,box-shadow] sm:p-4", isChecked && "border-jade-300 shadow-glow")}
+                style={{ ["--rise-index" as string]: index }}
               >
-                <GitCompare className="h-5 w-5" style={{ color: "#7C3AED" }} />
-              </div>
-              <div>
-                <h2 id="compare-modal-title" className="text-lg sm:text-xl font-bold" style={{ color: "#0D0B1E" }}>
-                  Choose 2 Products to Compare
-                </h2>
-                <p className="text-xs sm:text-sm" style={{ color: "#7A7068" }}>
-                  Select any two distinct products from your cart for side-by-side analysis.
-                </p>
-              </div>
-            </div>
-
-            {/* Selection status chip */}
-            <div className="mt-4 flex items-center justify-between rounded-xl border border-purple-100 bg-purple-50/70 px-4 py-2.5 text-xs">
-              <span className="font-semibold text-[#5A5248]">
-                {selectedProductIds.length === 0
-                  ? "Select your first product below"
-                  : selectedProductIds.length === 1
-                  ? "Select a second product to compare"
-                  : "2 products selected and ready"}
-              </span>
-              <span className="font-bold text-[#7C3AED]">
-                {selectedProductIds.length} / 2 selected
-              </span>
-            </div>
-
-            {/* Products list */}
-            <div className="mt-4 max-h-80 space-y-2.5 overflow-y-auto pr-1">
-              {distinctCartProducts.map((prod) => {
-                const pid = getProductComparisonId(prod);
-                const isSelected = selectedProductIds.includes(pid);
-                return (
-                  <div
-                    key={pid}
-                    onClick={() => toggleCompareSelection(pid)}
-                    className="flex cursor-pointer items-center justify-between gap-3 rounded-2xl border p-3.5 transition-all hover:border-purple-300"
-                    style={{
-                      borderColor: isSelected ? "#7C3AED" : "#E8E2D9",
-                      background: isSelected ? "#FAF5FF" : "#FFFFFF",
-                      boxShadow: isSelected ? "0 2px 10px rgba(124,58,237,0.12)" : "none",
-                    }}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div
-                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition ${
-                          isSelected
-                            ? "border-[#7C3AED] bg-[#7C3AED] text-white"
-                            : "border-[#C4B5FD] bg-white"
-                        }`}
-                      >
-                        {isSelected && <Check className="h-3 w-3" strokeWidth={3} />}
-                      </div>
-
-                      {prod.image ? (
-                        <img
-                          src={prod.image}
-                          alt=""
-                          className="h-12 w-12 rounded-xl object-cover shrink-0 border"
-                          style={{ borderColor: "#E8E2D9" }}
-                        />
-                      ) : (
-                        <div
-                          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-sm"
-                          style={{ background: "#F8F5F0" }}
-                        >
-                          📦
-                        </div>
-                      )}
-
-                      <div className="min-w-0">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-[#7C3AED]">
-                          {prod.brand || "Brand"}
-                        </p>
-                        <p className="truncate text-xs sm:text-sm font-semibold text-[#0D0B1E]">
-                          {prod.name}
-                        </p>
-                      </div>
+                <Link to={productPath(product)} state={{ productFallback: product }} className="shrink-0">
+                  <ProductImage src={product.image} alt={product.name} className="h-24 w-24 rounded-2xl sm:h-28 sm:w-28" imgClassName="p-2" />
+                </Link>
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <div className="flex items-start gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="eyebrow truncate text-[10px] text-faint">{[product.brand, productRetailer(product)].filter(Boolean).join(" · ") || "Live listing"}</p>
+                      <Link to={productPath(product)} state={{ productFallback: product }} className="line-clamp-2 mt-1 text-[14.5px] font-medium leading-snug text-ink hover:underline hover:underline-offset-4">
+                        {product.name}
+                      </Link>
                     </div>
+                    {showSelection && isComparable(product) && (
+                      <button
+                        type="button"
+                        onClick={() => toggleSelected(key)}
+                        aria-pressed={isChecked}
+                        className={cn(
+                          "flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[12px] transition-colors",
+                          isChecked ? "border-jade-600 bg-jade-600 text-white" : "border-line text-ink-2 hover:border-ink",
+                        )}
+                      >
+                        {isChecked ? <Check className="h-3.5 w-3.5" /> : <GitCompareArrows className="h-3.5 w-3.5" />}
+                        <span className="hidden sm:inline">{isChecked ? "Selected" : "Compare"}</span>
+                      </button>
+                    )}
+                  </div>
+                  <p className="tabular mt-1.5 text-[13px] text-muted">{price ? `${price} each` : "Price unavailable"}</p>
 
-                    <div className="shrink-0 text-right">
-                      <p className="text-xs sm:text-sm font-bold text-[#7C3AED]">
-                        {formatCurrency(prod.price)}
-                      </p>
+                  <div className="mt-auto flex flex-wrap items-center gap-2 pt-3">
+                    <div className="flex items-center rounded-full border border-line">
+                      <button type="button" onClick={() => decreaseQuantity(key)} className="flex h-8 w-8 items-center justify-center rounded-full text-ink-2 hover:bg-sunken" aria-label={`Decrease quantity of ${product.name}`}>
+                        <Minus className="h-3.5 w-3.5" />
+                      </button>
+                      <span className="tabular w-7 text-center text-sm font-medium" aria-live="polite">
+                        {quantity}
+                      </span>
+                      <button type="button" onClick={() => increaseQuantity(key)} className="flex h-8 w-8 items-center justify-center rounded-full text-ink-2 hover:bg-sunken" aria-label={`Increase quantity of ${product.name}`}>
+                        <Plus className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <button type="button" onClick={() => removeProduct(key)} className="flex h-8 items-center gap-1.5 rounded-full px-3 text-[12.5px] text-muted hover:bg-danger-soft hover:text-danger" aria-label={`Remove ${product.name}`}>
+                      <Trash2 className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Remove</span>
+                    </button>
+                    <div className="ml-auto flex items-center gap-3">
+                      {lineTotal && <span className="tabular text-[15px] font-semibold text-ink">{lineTotal}</span>}
+                      {url && (
+                        <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex h-8 items-center gap-1 rounded-full bg-ink px-3.5 text-[12px] font-medium text-white hover:bg-jade-700">
+                          Buy <ArrowUpRight className="h-3 w-3" />
+                        </a>
+                      )}
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
 
-            {/* Modal Footer */}
-            <div className="mt-6 flex items-center justify-end gap-3 border-t pt-4" style={{ borderColor: "#E8E2D9" }}>
-              <button
-                type="button"
-                onClick={() => setIsSelectionModalOpen(false)}
-                className="rounded-xl border px-4 py-2.5 text-xs sm:text-sm font-semibold text-[#5A5248] hover:bg-gray-50 transition"
-                style={{ borderColor: "#E8E2D9" }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={selectedProductIds.length !== 2 || isComparing}
-                onClick={() => {
-                  if (selectedProductIds.length === 2) {
-                    executeComparison(selectedProductIds[0], selectedProductIds[1]);
-                  }
-                }}
-                className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs sm:text-sm font-semibold text-white transition hover:-translate-y-px disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{
-                  background: "linear-gradient(135deg, #7C3AED 0%, #A855F7 100%)",
-                  boxShadow: "0 4px 14px rgba(124,58,237,0.30)",
-                }}
-              >
-                {isComparing ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Comparing…
-                  </>
-                ) : (
-                  <>
-                    <GitCompare className="h-4 w-4" />
-                    Compare 2 Selected Products
-                  </>
-                )}
-              </button>
-            </div>
+        <aside className="lg:sticky lg:top-28 lg:self-start">
+          <div className="card rise-in p-6" style={{ ["--rise-index" as string]: 2 }}>
+            <p className="eyebrow text-[10px] text-muted">Summary</p>
+            <dl className="mt-5 space-y-3 text-sm">
+              <div className="flex justify-between">
+                <dt className="text-muted">Items</dt>
+                <dd className="tabular text-ink">{totalQuantity}</dd>
+              </div>
+              <div className="flex justify-between border-t border-line pt-3">
+                <dt className="font-medium text-ink">Estimated total</dt>
+                <dd className="tabular text-xl font-semibold tracking-tight text-ink">{formatPrice(subtotal) ?? "—"}</dd>
+              </div>
+            </dl>
+            <p className="mt-3 text-[12px] leading-relaxed text-faint">
+              Based on listed prices{unpricedCount > 0 ? `; ${unpricedCount} item${unpricedCount === 1 ? " has" : "s have"} no listed price` : ""}. Each purchase is completed on the retailer's site, where the final price is confirmed.
+            </p>
+
+            <Button className="mt-6 w-full" size="lg" onClick={compare} disabled={comparable.length < 2} icon={<GitCompareArrows className="h-4 w-4" />}>
+              {comparable.length === 2 ? "Compare these two" : validSelected.length === 2 ? "Compare selected" : "Compare products"}
+            </Button>
+            {showSelection && validSelected.length < 2 && !message && <p className="mt-3 text-center text-[12px] text-muted">Select two items to compare ({validSelected.length}/2).</p>}
+            {message && (
+              <p className="pop-in mt-3 text-center text-[12.5px] text-warn" role="status">
+                {message}
+              </p>
+            )}
+            <Link to="/search" className={buttonClasses("ghost", "md", "mt-2 w-full")}>
+              Keep shopping
+            </Link>
           </div>
-        </div>
-      )}
-
-      <Footer />
-    </PageBackground>
+        </aside>
+      </div>
+    </div>
   );
 };
 

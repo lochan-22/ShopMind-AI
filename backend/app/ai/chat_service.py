@@ -1,4 +1,5 @@
 import json
+import logging
 from collections.abc import AsyncIterator
 from typing import Any
 from urllib.parse import quote
@@ -10,6 +11,16 @@ from app.services.llm_service import parse_user_query
 from app.services.search.product_normalizer import NormalizedProduct
 from app.services.search.providers.base_provider import ProductProviderError
 from app.services.search.search_service import SearchService
+
+logger = logging.getLogger(__name__)
+
+# Shown to shoppers when the language model fails. Provider error details can
+# include account identifiers, so they are logged server-side only.
+_MODEL_UNAVAILABLE_MESSAGE = (
+    "The AI assistant is temporarily unavailable. Product searches that mention "
+    "a brand, category or budget still return live results — please try one of those."
+)
+_EMPTY_REPLY_MESSAGE = "I couldn't put together a reply that time. Please send your message again."
 
 
 def _event(event_type: str, payload: dict[str, Any] | None = None) -> str:
@@ -101,11 +112,18 @@ class ChatService:
         messages.append({"role": "user", "content": message})
 
         try:
+            replied = False
             async for content in self.provider.stream_chat(messages):
+                replied = True
                 yield _event("token", {"content": content})
+            if not replied:
+                # Reasoning models can occasionally finish without visible text.
+                yield _event("error", {"message": _EMPTY_REPLY_MESSAGE})
+                return
             yield _event("done")
         except OpenRouterError as error:
-            yield _event("error", {"message": str(error)})
+            logger.warning("Agent chat model request failed: %s", error)
+            yield _event("error", {"message": _MODEL_UNAVAILABLE_MESSAGE})
 
     @staticmethod
     def _is_product_search(message: str) -> bool:

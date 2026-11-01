@@ -2,16 +2,36 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0A0C0E" />
     <meta
       name="description"
-      content="ShopMind AI — AI-powered shopping made simple"
+      content="ShopMind AI turns a plain-language request into a ranked shortlist of real products, with live prices and honest buying insights."
     />
-    <title>ShopMind AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap"
+    />
+    <title>ShopMind AI — Intelligent Shopping</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Shown until React mounts; replaced on first render. -->
+      <div style="position:fixed;inset:0;display:grid;place-items:center;background:#f6f5f1" role="status" aria-label="Loading ShopMind AI">
+        <img src="/brand/shopmind-icon-128.webp" width="64" height="64" alt="" class="boot-mark" />
+      </div>
+      <style>
+        .boot-mark { border-radius: 9999px; animation: boot-pulse 1.6s ease-in-out infinite; }
+        @keyframes boot-pulse { 50% { transform: scale(0.94); opacity: 0.75; } }
+        @media (prefers-reduced-motion: reduce) { .boot-mark { animation: none; } }
+      </style>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

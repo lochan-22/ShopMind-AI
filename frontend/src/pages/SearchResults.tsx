@@ -1,687 +1,431 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import Navbar from "../components/common/Navbar";
-import Footer from "../components/common/Footer";
-import PageBackground from "../components/common/PageBackground";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { ArrowDown, ArrowRight, CircleAlert, Layers, RefreshCw, SearchX, Sparkles, Tag, Wallet, Zap } from "lucide-react";
+import { SearchCommand, EXAMPLE_PROMPTS } from "../components/search/SearchCommand";
+import { InsightsPanel } from "../components/insights/InsightsPanel";
+import { AnalysisProgress } from "../components/insights/AnalysisProgress";
+import { FeaturedRecommendation, RecommendationCard } from "../components/product/RecommendationCard";
 import { ProductCard } from "../components/product/ProductCard";
-import { ProductSearchForm } from "../components/product/ProductSearchForm";
-import {
-  getShoppingDecision,
-  type Product,
-  type ShoppingDecision,
-} from "../services/productService";
-import {
-  getSearchEntry,
-  setSearchDecision,
-  updateScrollY,
-  invalidateSearchDecision,
-} from "../services/searchCache";
-import {
-  Loader2,
-  AlertTriangle,
-  Sparkles,
-  CheckCircle2,
-  ShieldCheck,
-  Tag,
-  Target,
-  Zap,
-} from "lucide-react";
+import { StateView } from "../components/ui/StateView";
+import { Reveal } from "../components/ui/Reveal";
+import { Badge } from "../components/ui/Badge";
+import { Accent } from "../components/ui/SectionHeading";
+import { Button, buttonClasses } from "../components/ui/Button";
+import { getShoppingDecision, type ShoppingDecision } from "../services/productService";
+import { getSearchEntry, invalidateSearchDecision, setSearchDecision, updateScrollY } from "../services/searchCache";
+import { useAgent } from "../agent/AgentContext";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import { getErrorMessage } from "../utils/errors";
+import { productKey, productRetailer } from "../utils/product";
+import { cn } from "../utils/cn";
 
-const isDuplicateSummary = (
-  summary?: string | null,
-  directAnswer?: string | null,
-): boolean => {
-  if (!summary || !directAnswer) return false;
-  const sNorm = summary.toLowerCase().replace(/[^a-z0-9]/g, " ").trim();
-  const dNorm = directAnswer.toLowerCase().replace(/[^a-z0-9]/g, " ").trim();
-  if (sNorm === dNorm) return true;
-  if (sNorm.length > 20 && dNorm.includes(sNorm.slice(0, 30))) return true;
-  if (dNorm.length > 20 && sNorm.includes(dNorm.slice(0, 30))) return true;
-  const sWords = new Set(sNorm.split(/\s+/).filter((w) => w.length > 3));
-  const dWords = new Set(dNorm.split(/\s+/).filter((w) => w.length > 3));
-  if (sWords.size === 0 || dWords.size === 0) return false;
-  let common = 0;
-  for (const w of sWords) {
-    if (dWords.has(w)) common++;
-  }
-  const ratio = common / Math.min(sWords.size, dWords.size);
-  return ratio > 0.6;
+type SortKey = "match" | "price_asc" | "price_desc" | "rating";
+const PAGE_SIZE = 12;
+
+const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: "match", label: "Best match" },
+  { value: "price_asc", label: "Price: low to high" },
+  { value: "price_desc", label: "Price: high to low" },
+  { value: "rating", label: "Highest rated" },
+];
+
+/** Landing view for /search without a query. */
+const SearchLanding = () => {
+  const navigate = useNavigate();
+  const go = (query: string) => navigate(`/search?q=${encodeURIComponent(query)}`);
+  return (
+    <section className="container-x pb-24 pt-36 sm:pt-44">
+      <div className="mx-auto max-w-3xl text-center">
+        <p className="eyebrow text-muted">Ask ShopMind</p>
+        <h1 className="mt-4 text-[2.4rem] font-semibold leading-[1.05] tracking-[-0.04em] text-ink sm:text-[3.6rem]">
+          What are you <Accent>shopping for?</Accent>
+        </h1>
+        <p className="mx-auto mt-4 max-w-xl text-[15px] text-muted">Include a budget, the way you'll use it, and anything you can't compromise on.</p>
+        <SearchCommand className="mt-10 text-left" autoFocus onSubmit={go} animatedPlaceholder />
+        <div className="mt-8 grid gap-2.5 text-left sm:grid-cols-2">
+          {EXAMPLE_PROMPTS.map((prompt, index) => (
+            <button
+              key={prompt}
+              type="button"
+              onClick={() => go(prompt)}
+              className="rise-in group flex items-center justify-between gap-3 rounded-2xl border border-line bg-surface px-4 py-3.5 text-[13.5px] text-ink-2 transition-[border-color,transform] duration-300 hover:-translate-y-0.5 hover:border-line-strong hover:text-ink"
+              style={{ ["--rise-index" as string]: index }}
+            >
+              {prompt}
+              <ArrowRight className="h-4 w-4 shrink-0 text-faint transition-transform group-hover:translate-x-0.5 group-hover:text-ink" />
+            </button>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
 };
 
-const SearchResults: React.FC = () => {
+const IntentChips = ({ decision }: { decision: ShoppingDecision }) => {
+  const intent = decision.intent;
+  const budget = intent.budget_max ?? intent.budget;
+  const features = Array.from(new Set([...(intent.required_features ?? []), ...(intent.features ?? [])])).slice(0, 5);
+  if (!intent.category && budget == null && !intent.brand && features.length === 0) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="text-[12px] text-faint">Understood as</span>
+      {intent.category && (
+        <Badge tone="outline" icon={<Tag className="h-3 w-3" />}>
+          {intent.category}
+        </Badge>
+      )}
+      {budget != null && (
+        <Badge tone="jade" icon={<Wallet className="h-3 w-3" />}>
+          Under ₹{budget.toLocaleString("en-IN")}
+        </Badge>
+      )}
+      {intent.brand && <Badge tone="outline">{intent.brand}</Badge>}
+      {features.map((feature) => (
+        <Badge key={feature} tone="outline" icon={<Zap className="h-3 w-3" />}>
+          {feature}
+        </Badge>
+      ))}
+    </div>
+  );
+};
+
+const SearchResults = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const query = searchParams.get("q") ?? "";
+  const query = (searchParams.get("q") ?? "").trim();
+  const { openAgent } = useAgent();
+  useDocumentTitle(query ? `“${query}”` : "Search");
 
-  // Read any valid cached results for this query immediately on mount
   const initialCache = query ? getSearchEntry(query) : null;
-
-  const [products, setProducts] = useState<Product[]>(
-    () => initialCache?.decision.all_products ?? [],
-  );
-  const [decision, setDecision] = useState<ShoppingDecision | null>(
-    () => initialCache?.decision ?? null,
-  );
-  const [loading, setLoading] = useState<boolean>(
-    () => Boolean(query) && !initialCache,
-  );
+  const [decision, setDecision] = useState<ShoppingDecision | null>(() => initialCache?.decision ?? null);
+  const [loading, setLoading] = useState(() => Boolean(query) && !initialCache);
   const [error, setError] = useState<string | null>(null);
-  const [hasCompletedSearch, setHasCompletedSearch] = useState<boolean>(
-    () => Boolean(initialCache),
-  );
   const [retrySequence, setRetrySequence] = useState(0);
+  const forceRefreshRef = useRef(false);
+  const [sortBy, setSortBy] = useState<SortKey>("match");
+  const [retailer, setRetailer] = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  const isRetryingRef = React.useRef(false);
-
-  // Restore cached scroll position on mount if available
+  // Load the decision: from cache when returning from a product page, otherwise live.
   useEffect(() => {
-    if (initialCache?.scrollY != null && initialCache.scrollY > 0) {
-      requestAnimationFrame(() => {
-        window.scrollTo({ top: initialCache.scrollY, behavior: "instant" });
-      });
-    }
-  }, []);
-
-  // Track scroll position before leaving or navigating to a product
-  useEffect(() => {
-    const handleScroll = () => {
-      if (query && hasCompletedSearch) {
-        updateScrollY(query, window.scrollY);
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      if (query && hasCompletedSearch) {
-        updateScrollY(query, window.scrollY);
-      }
-    };
-  }, [query, hasCompletedSearch]);
-
-  useEffect(() => {
+    setSortBy("match");
+    setRetailer(null);
+    setVisibleCount(PAGE_SIZE);
     if (!query) {
-      setProducts([]);
       setDecision(null);
       setLoading(false);
       setError(null);
-      setHasCompletedSearch(false);
       return;
     }
 
     const cached = getSearchEntry(query);
-
-    // If cache is valid and not an explicit retry, restore cached state and skip network request
-    if (cached && !isRetryingRef.current) {
+    if (cached && !forceRefreshRef.current) {
       setDecision(cached.decision);
-      setProducts(cached.decision.all_products);
       setLoading(false);
       setError(null);
-      setHasCompletedSearch(true);
-
-      if (cached.scrollY != null && cached.scrollY > 0) {
-        requestAnimationFrame(() => {
-          window.scrollTo({ top: cached.scrollY, behavior: "instant" });
-        });
+      if (cached.scrollY && cached.scrollY > 0) {
+        requestAnimationFrame(() => window.scrollTo({ top: cached.scrollY, behavior: "instant" }));
       }
       return;
     }
 
-    isRetryingRef.current = false;
+    forceRefreshRef.current = false;
     let cancelled = false;
+    setLoading(true);
+    setError(null);
+    setDecision(null);
 
-    const fetchResults = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const decisionData = await getShoppingDecision(query);
+    getShoppingDecision(query)
+      .then((data) => {
         if (cancelled) return;
-        setDecision(decisionData);
-        setProducts(decisionData.all_products);
-        setHasCompletedSearch(true);
-        setSearchDecision(query, decisionData, window.scrollY);
-      } catch {
-        if (cancelled) return;
-        setError("Product search is temporarily unavailable. Please try again.");
-      } finally {
+        setDecision(data);
+        // Unranked fallbacks are not cached so the next visit retries the full analysis.
+        if (data.ai_analysis.analysis_source !== "search_only") setSearchDecision(query, data, 0);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) setError(getErrorMessage(err, "Product search is temporarily unavailable. Please try again."));
+      })
+      .finally(() => {
         if (!cancelled) setLoading(false);
-      }
-    };
-
-    void fetchResults();
+      });
 
     return () => {
       cancelled = true;
     };
   }, [query, retrySequence]);
 
-  const [sortBy, setSortBy] = useState<"match" | "price_asc" | "price_desc" | "rating">("match");
-  const [visibleCount, setVisibleCount] = useState<number>(12);
-
+  // Remember the scroll position so returning from a product restores it.
   useEffect(() => {
-    setVisibleCount(12);
-  }, [query]);
+    if (!query || !decision) return;
+    const onScroll = () => updateScrollY(query, window.scrollY);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      updateScrollY(query, window.scrollY);
+    };
+  }, [query, decision]);
 
-  const topRecs = decision?.top_recommendations ?? [];
-  const aiAnalysis = decision?.ai_analysis;
-  const intent = decision?.intent;
+  const retry = () => {
+    if (query) invalidateSearchDecision(query);
+    forceRefreshRef.current = true;
+    setRetrySequence((value) => value + 1);
+  };
 
-  // Deduplicate: exclude items already in top recommendations from broader market catalogue
-  const topRecIds = React.useMemo(() => {
-    return new Set(topRecs.map((p) => String(p.product_id || p.id)));
-  }, [topRecs]);
+  const handleSearch = (next: string) => {
+    if (next.toLowerCase() === query.toLowerCase()) retry();
+    else navigate(`/search?q=${encodeURIComponent(next)}`);
+  };
 
-  const additionalProducts = React.useMemo(() => {
-    return products.filter((p) => !topRecIds.has(String(p.product_id || p.id)));
-  }, [products, topRecIds]);
+  const allProducts = useMemo(() => decision?.all_products ?? [], [decision]);
+  const topRecs = useMemo(() => decision?.top_recommendations ?? [], [decision]);
+  const isSearchOnly = decision?.ai_analysis.analysis_source === "search_only";
 
-  const sortedAdditionalProducts = React.useMemo(() => {
-    const list = [...additionalProducts];
-    if (sortBy === "price_asc") {
-      list.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
-    } else if (sortBy === "price_desc") {
-      list.sort((a, b) => (b.price ?? -Infinity) - (a.price ?? -Infinity));
-    } else if (sortBy === "rating") {
-      list.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+  const explore = useMemo(() => {
+    const topKeys = new Set(topRecs.map(productKey));
+    return allProducts.filter((product) => !topKeys.has(productKey(product)));
+  }, [allProducts, topRecs]);
+
+  const retailers = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const product of explore) {
+      const name = productRetailer(product);
+      if (name) counts.set(name, (counts.get(name) ?? 0) + 1);
     }
-    return list;
-  }, [additionalProducts, sortBy]);
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6).map(([name]) => name);
+  }, [explore]);
 
-  const paginatedAdditionalProducts = sortedAdditionalProducts.slice(0, visibleCount);
+  const sortedExplore = useMemo(() => {
+    const list = retailer ? explore.filter((product) => productRetailer(product) === retailer) : [...explore];
+    if (sortBy === "price_asc") list.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
+    if (sortBy === "price_desc") list.sort((a, b) => (b.price ?? -Infinity) - (a.price ?? -Infinity));
+    if (sortBy === "rating") list.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+    return list;
+  }, [explore, sortBy, retailer]);
+
+  if (!query) return <SearchLanding />;
+
+  const [first, ...rest] = topRecs;
+  const noQualifying = decision && !isSearchOnly && topRecs.length === 0;
 
   return (
-    <PageBackground>
-      <Navbar />
-
-      <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-2 mb-2">
-            <div
-              className="flex h-9 w-9 items-center justify-center rounded-xl"
-              style={{
-                background: "linear-gradient(135deg, #7C3AED 0%, #A855F7 100%)",
-                boxShadow: "0 4px 12px rgba(124,58,237,0.30)",
-              }}
-            >
-              <Sparkles className="h-4 w-4 text-white" strokeWidth={2} />
-            </div>
-            <h1
-              className="text-2xl sm:text-3xl font-bold tracking-tight"
-              style={{ color: "#0D0B1E" }}
-            >
-              Search Results
-            </h1>
-          </div>
-          {query && (
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              <p className="text-sm" style={{ color: "#7A7068" }}>
-                Showing live results for{" "}
-                <span className="font-semibold" style={{ color: "#7C3AED" }}>
-                  &ldquo;{query}&rdquo;
-                </span>
-              </p>
-
-              {/* Detected intent pills */}
-              {intent?.category && (
-                <span
-                  className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
-                  style={{ background: "#F5F3FF", color: "#7C3AED", border: "1px solid #DDD6FE" }}
-                >
-                  <Tag className="h-3 w-3" />
-                  {intent.category}
-                </span>
-              )}
-              {intent?.budget != null && (
-                <span
-                  className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
-                  style={{ background: "#ECFDF5", color: "#059669", border: "1px solid #A7F3D0" }}
-                >
-                  <ShieldCheck className="h-3 w-3" />
-                  Budget: Under ₹{intent.budget.toLocaleString("en-IN")}
-                </span>
-              )}
-              {intent?.features?.map((feat) => (
-                <span
-                  key={feat}
-                  className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
-                  style={{ background: "#FFF7ED", color: "#EA580C", border: "1px solid #FFEDD5" }}
-                >
-                  <Zap className="h-3 w-3" />
-                  {feat}
-                </span>
-              ))}
+    <div className="pb-24">
+      {/* Header */}
+      <section className="relative overflow-hidden border-b border-line bg-surface/50 pb-10 pt-28 sm:pt-32">
+        <div className="dot-grid pointer-events-none absolute inset-0 opacity-40 [mask-image:linear-gradient(to_bottom,#000,transparent)]" aria-hidden="true" />
+        <div className="container-x relative">
+          <p className="eyebrow text-muted">Results for</p>
+          <h1 className="mt-3 max-w-4xl text-[1.75rem] font-semibold leading-[1.15] tracking-[-0.03em] text-ink sm:text-[2.6rem]">
+            <Accent>“</Accent>
+            {query}
+            <Accent>”</Accent>
+          </h1>
+          {decision && (
+            <div className="mt-4">
+              <IntentChips decision={decision} />
             </div>
           )}
+          <SearchCommand className="mt-7 max-w-3xl" initialQuery={query} onSubmit={handleSearch} busy={loading} />
         </div>
+      </section>
 
-        {/* Search form */}
-        <div
-          className="mb-8 rounded-2xl border p-4 sm:p-5"
-          style={{
-            background: "linear-gradient(135deg, #FFFFFF, #FDFAF7)",
-            borderColor: "#E8E2D9",
-            boxShadow: "0 2px 10px rgba(13,11,30,0.05)",
-          }}
-        >
-          <ProductSearchForm
-            initialQuery={query}
-            onSearch={(nextQuery) => {
-              const trimmedNext = nextQuery.trim();
-              if (trimmedNext.toLowerCase() === query.trim().toLowerCase()) {
-                invalidateSearchDecision(query);
-                isRetryingRef.current = true;
-                setRetrySequence((c) => c + 1);
-              } else {
-                navigate(`/search?q=${encodeURIComponent(trimmedNext)}`);
-              }
-            }}
+      <div className="container-x mt-12 space-y-20 sm:mt-14 sm:space-y-24">
+        {loading && <AnalysisProgress query={query} />}
+
+        {!loading && error && (
+          <StateView
+            tone="danger"
+            icon={<CircleAlert className="h-6 w-6" />}
+            title="We couldn't complete this search"
+            description={error}
+            actions={
+              <>
+                <Button onClick={retry} icon={<RefreshCw className="h-4 w-4" />}>
+                  Try again
+                </Button>
+                <Link to="/categories" className={buttonClasses("secondary")}>
+                  Browse collections
+                </Link>
+              </>
+            }
           />
-        </div>
-
-        {/* Loading — initial */}
-        {loading && products.length === 0 && (
-          <div
-            className="flex flex-col items-center justify-center rounded-3xl border py-24 text-center"
-            style={{
-              background: "linear-gradient(135deg, #FFFFFF, #F8F5FF)",
-              borderColor: "#E8E2D9",
-              boxShadow: "0 4px 24px rgba(124,58,237,0.08)",
-            }}
-          >
-            <div
-              className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl"
-              style={{ background: "linear-gradient(135deg, #7C3AED, #A855F7)" }}
-            >
-              <Loader2 className="h-7 w-7 animate-spin text-white" />
-            </div>
-            <p className="text-base font-semibold" style={{ color: "#0D0B1E" }}>
-              ShopMind AI is analyzing market offers…
-            </p>
-            <p className="mt-1 text-sm" style={{ color: "#A89F95" }}>
-              Extracting criteria · Querying Google Shopping via SerpApi · Verifying budgets
-            </p>
-          </div>
         )}
 
-        {/* Loading — over existing results */}
-        {loading && products.length > 0 && (
-          <div
-            className="mb-6 flex items-center gap-2.5 rounded-xl border px-4 py-3 text-sm"
-            style={{
-              background: "#F5F3FF",
-              borderColor: "#DDD6FE",
-              color: "#7C3AED",
-            }}
-          >
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Loading decision analysis for &ldquo;{query}&rdquo;…
-          </div>
-        )}
-
-        {/* Error state */}
-        {error && (
-          <div
-            className="mb-6 flex flex-col items-center justify-center rounded-3xl border py-12 text-center"
-            style={{ background: "#FFF5F5", borderColor: "#FECACA" }}
-          >
-            <AlertTriangle className="h-8 w-8 text-red-400" />
-            <p className="mt-4 text-sm font-semibold" style={{ color: "#DC2626" }}>
-              {error}
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                if (query) invalidateSearchDecision(query);
-                isRetryingRef.current = true;
-                setRetrySequence((c) => c + 1);
-              }}
-              className="mt-4 rounded-xl px-5 py-2 text-sm font-semibold text-white transition-all hover:-translate-y-px"
-              style={{ background: "linear-gradient(135deg, #7C3AED, #6D28D9)" }}
-            >
-              Retry
-            </button>
-          </div>
-        )}
-
-        {/* Empty state (only if no AI analysis was returned) */}
-        {!loading && !error && hasCompletedSearch && products.length === 0 && !aiAnalysis && (
-          <div
-            className="flex flex-col items-center justify-center rounded-3xl border py-20 text-center"
-            style={{
-              background: "linear-gradient(135deg, #FFFFFF, #F8F5FF)",
-              borderColor: "#E8E2D9",
-            }}
-          >
-            <span className="text-4xl mb-4">🔍</span>
-            <p className="text-base font-semibold" style={{ color: "#0D0B1E" }}>
-              No products found for &ldquo;{query}&rdquo;
-            </p>
-            <p className="mt-1 text-sm" style={{ color: "#A89F95" }}>
-              Try different keywords or browse by category
-            </p>
-          </div>
-        )}
-
-        {/* AI Shopping Analysis Card */}
-        {!loading && !error && aiAnalysis && (
-          <div
-            className="mb-10 overflow-hidden rounded-3xl border transition-all"
-            style={{
-              background: "linear-gradient(135deg, #FFFFFF 0%, #FAF7FF 50%, #FFF9F5 100%)",
-              borderColor: "#DDD6FE",
-              boxShadow: "0 8px 30px rgba(124, 58, 237, 0.08)",
-            }}
-          >
-            <div className="p-6 sm:p-8">
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-                <div className="inline-flex items-center gap-2 rounded-full border border-purple-200 bg-purple-50/80 px-3.5 py-1 text-xs font-bold text-[#7C3AED]">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  <span>ShopMind AI Shopping Assistant</span>
+        {!loading && !error && decision && (
+          <>
+            {isSearchOnly && (
+              <div className="rise-in flex flex-col gap-4 rounded-3xl border border-warn/15 bg-warn-soft p-6 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex gap-3">
+                  <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-warn" />
+                  <div>
+                    <p className="font-medium text-ink">Buying analysis is unavailable right now</p>
+                    <p className="mt-1 text-sm text-muted">These are live listings in their original order — not yet ranked or filtered against your requirements.</p>
+                  </div>
                 </div>
-                <span
-                  className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
-                  style={{
-                    background: aiAnalysis.analysis_source === "openrouter" ? "#EDE9FE" : "#F3F4F6",
-                    color: aiAnalysis.analysis_source === "openrouter" ? "#6D28D9" : "#4B5563",
-                    border: aiAnalysis.analysis_source === "openrouter" ? "1px solid #C4B5FD" : "1px solid #E5E7EB",
-                  }}
-                >
-                  {aiAnalysis.analysis_source === "openrouter"
-                    ? `Powered by ${aiAnalysis.model || "OpenRouter AI"}`
-                    : "Market Evaluation"}
-                </span>
+                <Button variant="secondary" onClick={retry} icon={<RefreshCw className="h-4 w-4" />}>
+                  Retry analysis
+                </Button>
               </div>
+            )}
 
-              {/* Direct Answer */}
-              {aiAnalysis.direct_answer && (
-                <div
-                  className="mb-4 rounded-2xl p-4 sm:p-5 text-sm sm:text-base leading-relaxed font-medium"
-                  style={{
-                    background: "linear-gradient(135deg, #F5F3FF 0%, #FAF5FF 100%)",
-                    borderLeft: "4px solid #7C3AED",
-                    color: "#0D0B1E",
-                  }}
-                >
-                  <p className="font-semibold text-xs text-[#7C3AED] uppercase tracking-wider mb-1">
-                    AI Shopping Guidance
-                  </p>
-                  <p>{aiAnalysis.direct_answer}</p>
-                </div>
-              )}
+            {!isSearchOnly && <InsightsPanel decision={decision} />}
 
-              {/* Summary / Explanatory Paragraph - only if provided and not duplicating the guidance */}
-              {aiAnalysis.summary &&
-                aiAnalysis.summary.trim().length > 0 &&
-                !isDuplicateSummary(aiAnalysis.summary, aiAnalysis.direct_answer) && (
-                  <p className="mb-4 text-sm sm:text-base font-normal leading-relaxed text-[#5A5248]">
-                    {aiAnalysis.summary}
+            {noQualifying && (
+              <StateView
+                tone="warn"
+                icon={<SearchX className="h-6 w-6" />}
+                title="Nothing met every requirement"
+                description={
+                  <>
+                    <p>{decision.ai_analysis.limitations || "No live listing satisfied both your budget and your required specifications."}</p>
+                    <p className="mt-3 text-faint">Try a slightly higher budget, fewer must-haves, or a broader category.</p>
+                  </>
+                }
+                actions={
+                  <>
+                    <Button onClick={openAgent} icon={<Sparkles className="h-4 w-4 text-jade-300" />}>
+                      Refine with the concierge
+                    </Button>
+                    <Link to="/categories" className={buttonClasses("secondary")}>
+                      Browse collections
+                    </Link>
+                  </>
+                }
+              />
+            )}
+
+            {first && (
+              <section aria-labelledby="top-picks">
+                <Reveal className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <p className="eyebrow flex items-center gap-2 text-muted">
+                      <span className="h-px w-6 bg-line-strong" />
+                      Shortlist
+                    </p>
+                    <h2 id="top-picks" className="mt-3 text-[1.9rem] font-semibold tracking-[-0.03em] text-ink sm:text-[2.3rem]">
+                      Top-Tier Recommendations
+                    </h2>
+                    <p className="mt-2 max-w-xl text-sm text-muted">
+                      Ranked from live listings by fit, value, verified specs and reputation. Prices and stock can change at the retailer.
+                    </p>
+                  </div>
+                  {explore.length > 0 && (
+                    <a href="#explore" className={buttonClasses("ghost", "sm")}>
+                      {explore.length} more listings <ArrowDown className="h-3.5 w-3.5" />
+                    </a>
+                  )}
+                </Reveal>
+
+                {topRecs.length < 5 && (
+                  <p className="mt-5 flex gap-2 text-[13px] text-warn">
+                    <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+                    Only {topRecs.length} listing{topRecs.length === 1 ? "" : "s"} met every requirement, so the shortlist is shorter than five.
                   </p>
                 )}
 
-              {/* Key criteria */}
-              {aiAnalysis.key_criteria && aiAnalysis.key_criteria.length > 0 && (
-                <div className="mt-5 pt-5 border-t border-purple-100">
-                  <p className="text-xs font-bold uppercase tracking-wider text-[#7C3AED] mb-3 flex items-center gap-1.5">
-                    <Target className="h-3.5 w-3.5" />
-                    Key Decision Criteria
-                  </p>
-                  <ul className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    {aiAnalysis.key_criteria.map((item, idx) => (
-                      <li
-                        key={idx}
-                        className="flex items-start gap-2 rounded-xl p-3 text-xs leading-relaxed font-medium"
-                        style={{
-                          background: "rgba(255, 255, 255, 0.9)",
-                          border: "1px solid #E8E2D9",
-                          color: "#5A5248",
-                        }}
-                      >
-                        <CheckCircle2 className="h-4 w-4 text-[#7C3AED] flex-shrink-0 mt-0.5" />
-                        <span>{item}</span>
-                      </li>
+                <Reveal className="mt-8" variant="scale">
+                  <FeaturedRecommendation product={first} rank={1} candidates={allProducts} />
+                </Reveal>
+                {rest.length > 0 && (
+                  <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    {rest.map((product, index) => (
+                      <Reveal key={productKey(product)} index={index}>
+                        <RecommendationCard product={product} rank={index + 2} candidates={allProducts} />
+                      </Reveal>
                     ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Trade-offs & Final Recommendation */}
-              {(aiAnalysis.trade_offs || aiAnalysis.final_recommendation) && (
-                <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                  {aiAnalysis.trade_offs && (
-                    <div
-                      className="rounded-xl p-3.5 text-xs font-medium"
-                      style={{
-                        background: "#FFFBEB",
-                        border: "1px solid #FDE68A",
-                        color: "#92400E",
-                      }}
-                    >
-                      <p className="font-bold text-[11px] uppercase tracking-wider mb-1 flex items-center gap-1.5 text-[#B45309]">
-                        <span>⚖️</span> Market Trade-Offs
-                      </p>
-                      <p className="leading-relaxed">{aiAnalysis.trade_offs}</p>
-                    </div>
-                  )}
-
-                  {aiAnalysis.final_recommendation && (
-                    <div
-                      className="rounded-xl p-3.5 text-xs font-medium"
-                      style={{
-                        background: "#F5F3FF",
-                        border: "1px solid #DDD6FE",
-                        color: "#5B21B6",
-                      }}
-                    >
-                      <p className="font-bold text-[11px] uppercase tracking-wider mb-1 flex items-center gap-1.5 text-[#7C3AED]">
-                        <span>🎯</span> Final Verdict
-                      </p>
-                      <p className="leading-relaxed">{aiAnalysis.final_recommendation}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Budget verdict bar */}
-              {aiAnalysis.budget_verdict && (
-                <div
-                  className="mt-5 flex items-center gap-2.5 rounded-xl p-3.5 text-xs font-semibold"
-                  style={{
-                    background: intent?.budget ? "#ECFDF5" : "#F8F5FF",
-                    border: intent?.budget ? "1px solid #A7F3D0" : "1px solid #DDD6FE",
-                    color: intent?.budget ? "#065F46" : "#6D28D9",
-                  }}
-                >
-                  <ShieldCheck className="h-4 w-4 flex-shrink-0" />
-                  <span>{aiAnalysis.budget_verdict}</span>
-                </div>
-              )}
-
-              {/* Missing Information / Limitations Alert */}
-              {(aiAnalysis.missing_information || aiAnalysis.limitations) && (
-                <div
-                  className="mt-3 flex items-start gap-2.5 rounded-xl p-3 text-xs font-medium"
-                  style={{
-                    background: "#FFF7ED",
-                    border: "1px solid #FFEDD5",
-                    color: "#9A3412",
-                  }}
-                >
-                  <span className="text-sm">ℹ️</span>
-                  <div>
-                    {aiAnalysis.missing_information && (
-                      <p className="font-semibold">{aiAnalysis.missing_information}</p>
-                    )}
-                    {aiAnalysis.limitations && aiAnalysis.limitations !== aiAnalysis.missing_information && (
-                      <p className="mt-0.5 text-[11px] opacity-90">{aiAnalysis.limitations}</p>
-                    )}
                   </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Zero-match strict constraint alert */}
-        {!loading && !error && hasCompletedSearch && topRecs.length === 0 && aiAnalysis && (
-          <div
-            className="mb-10 rounded-2xl border p-6 text-center"
-            style={{
-              background: "#FFFBEB",
-              borderColor: "#FDE68A",
-              color: "#92400E",
-            }}
-          >
-            <span className="text-3xl mb-2 block">⚠️</span>
-            <h3 className="text-base font-bold text-[#92400E]">
-              No Products Met All Strict Constraints
-            </h3>
-            <p className="mt-1.5 text-xs sm:text-sm text-[#B45309] max-w-xl mx-auto leading-relaxed">
-              {aiAnalysis.limitations ||
-                aiAnalysis.direct_answer ||
-                "No live market models satisfied both your stated budget ceiling and hardware specifications. Over-budget and unverified configurations were omitted."}
-            </p>
-            <p className="mt-2 text-xs font-semibold text-[#78350F]">
-              Suggestion: Consider broadening your budget ceiling or broadening technical requirements.
-            </p>
-          </div>
-        )}
-
-        {/* Top 5 AI Product Recommendations */}
-        {!loading && !error && topRecs.length > 0 && (
-          <div className="mb-12">
-            <div className="mb-5 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2
-                    className="text-xl sm:text-2xl font-bold tracking-tight"
-                    style={{ color: "#0D0B1E" }}
-                  >
-                    Top {topRecs.length} AI Recommendations
-                  </h2>
-                  <span
-                    className="rounded-full px-2.5 py-0.5 text-[11px] font-bold"
-                    style={{
-                      background: "linear-gradient(135deg, #7C3AED, #A855F7)",
-                      color: "#FFFFFF",
-                    }}
-                  >
-                    Curated Picks
-                  </span>
-                </div>
-                <p className="mt-1 text-xs sm:text-sm text-[#7A7068]">
-                  Selected from live Google Shopping results based on feature matching and budget fit.
-                </p>
-              </div>
-            </div>
-
-            {/* If fewer than 5 qualified because of strict constraints, show limitation banner */}
-            {topRecs.length < 5 && (
-              <div
-                className="mb-4 rounded-xl px-4 py-2.5 text-xs font-medium border"
-                style={{
-                  background: "#FEF3C7",
-                  borderColor: "#FDE68A",
-                  color: "#92400E",
-                }}
-              >
-                <span>⚠️ Strict Constraint Match: Only {topRecs.length} product(s) in live listings satisfied all required criteria. Non-qualifying models were omitted from top recommendations.</span>
-              </div>
+                )}
+              </section>
             )}
 
-            <div className="grid grid-cols-1 gap-3 sm:gap-5 sm:grid-cols-2 lg:grid-cols-5">
-              {topRecs.map((product) => (
-                <ProductCard
-                  key={`rec-${product.id}`}
-                  product={product}
-                  navigationState={{ comparisonCandidates: products }}
-                />
-              ))}
-            </div>
-          </div>
-        )}
+            {explore.length > 0 && (
+              <section id="explore" aria-labelledby="explore-heading" className="scroll-mt-24">
+                <Reveal className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                  <div>
+                    <p className="eyebrow flex items-center gap-2 text-muted">
+                      <Layers className="h-3.5 w-3.5" /> {isSearchOnly ? "Live listings" : "Also qualified"}
+                    </p>
+                    <h2 id="explore-heading" className="mt-3 text-[1.7rem] font-semibold tracking-[-0.03em] text-ink sm:text-[2rem]">
+                      Explore the Collection
+                    </h2>
+                    <p className="tabular mt-2 text-sm text-muted">
+                      {sortedExplore.length} {isSearchOnly ? "live listings" : "more listings that passed every check"}
+                    </p>
+                  </div>
+                  <label className="flex items-center gap-2 text-[13px] text-muted">
+                    Sort
+                    <select
+                      value={sortBy}
+                      onChange={(event) => {
+                        setSortBy(event.target.value as SortKey);
+                        setVisibleCount(PAGE_SIZE);
+                      }}
+                      className="h-10 rounded-full border border-line bg-surface px-4 text-[13px] font-medium text-ink outline-none focus:border-jade-400"
+                    >
+                      {SORT_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </Reveal>
 
-        {/* Explore More Products / All Live Market Results */}
-        {additionalProducts.length > 0 && (
-          <div>
-            <div className="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div>
-                <h3
-                  className="text-lg sm:text-xl font-bold tracking-tight"
-                  style={{ color: "#0D0B1E" }}
-                >
-                  Explore More Products
-                </h3>
-                <p className="text-xs sm:text-sm" style={{ color: "#7A7068" }}>
-                  Showing{" "}
-                  <span className="font-bold" style={{ color: "#0D0B1E" }}>
-                    {Math.min(visibleCount, sortedAdditionalProducts.length)}
-                  </span>{" "}
-                  of{" "}
-                  <span className="font-bold" style={{ color: "#0D0B1E" }}>
-                    {sortedAdditionalProducts.length}
-                  </span>{" "}
-                  additional live offers from Google Shopping
-                </p>
-              </div>
+                {retailers.length > 1 && (
+                  <div className="no-scrollbar -mx-4 mt-6 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0">
+                    {[null, ...retailers].map((name) => (
+                      <button
+                        key={name ?? "all"}
+                        type="button"
+                        onClick={() => {
+                          setRetailer(name);
+                          setVisibleCount(PAGE_SIZE);
+                        }}
+                        aria-pressed={retailer === name}
+                        className={cn(
+                          "shrink-0 rounded-full border px-3.5 py-1.5 text-[12.5px] transition-colors duration-300",
+                          retailer === name ? "border-ink bg-ink text-white" : "border-line bg-surface text-ink-2 hover:border-line-strong",
+                        )}
+                      >
+                        {name ?? "All retailers"}
+                      </button>
+                    ))}
+                  </div>
+                )}
 
-              {/* Controls: Sorting */}
-              <div className="flex items-center gap-2">
-                <label htmlFor="sort-select" className="text-xs font-semibold text-[#7A7068]">
-                  Sort:
-                </label>
-                <select
-                  id="sort-select"
-                  value={sortBy}
-                  onChange={(e) =>
-                    setSortBy(
-                      e.target.value as "match" | "price_asc" | "price_desc" | "rating",
-                    )
-                  }
-                  className="rounded-xl border border-[#E8E2D9] bg-white px-3 py-1.5 text-xs font-semibold text-[#0D0B1E] shadow-xs focus:border-[#7C3AED] focus:outline-hidden"
-                >
-                  <option value="match">Best Match</option>
-                  <option value="price_asc">Price: Low to High</option>
-                  <option value="price_desc">Price: High to Low</option>
-                  <option value="rating">Highest Rated</option>
-                </select>
-                <span
-                  className="rounded-full px-3 py-1 text-[11px] font-semibold"
-                  style={{ background: "#FFF7ED", color: "#F97316" }}
-                >
-                  Google Shopping · India
-                </span>
-              </div>
-            </div>
+                <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
+                  {sortedExplore.slice(0, visibleCount).map((product, index) => (
+                    <Reveal key={productKey(product)} index={index % PAGE_SIZE}>
+                      <ProductCard product={product} candidates={allProducts} />
+                    </Reveal>
+                  ))}
+                </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {paginatedAdditionalProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  navigationState={{ comparisonCandidates: products }}
-                />
-              ))}
-            </div>
-
-            {/* Load More Pagination */}
-            {visibleCount < sortedAdditionalProducts.length && (
-              <div className="mt-8 flex justify-center">
-                <button
-                  type="button"
-                  onClick={() => setVisibleCount((prev) => prev + 12)}
-                  className="rounded-xl px-6 py-2.5 text-sm font-semibold text-[#7C3AED] border border-[#DDD6FE] bg-[#F5F3FF] transition-all hover:bg-[#EDE9FE] hover:border-[#C4B5FD] shadow-xs"
-                >
-                  Load More Products ({sortedAdditionalProducts.length - visibleCount} remaining)
-                </button>
-              </div>
+                {visibleCount < sortedExplore.length && (
+                  <div className="mt-10 flex justify-center">
+                    <Button variant="secondary" size="lg" onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}>
+                      Show more <span className="tabular text-faint">({sortedExplore.length - visibleCount})</span>
+                    </Button>
+                  </div>
+                )}
+              </section>
             )}
-          </div>
+
+            {!first && explore.length === 0 && !noQualifying && (
+              <StateView
+                icon={<SearchX className="h-6 w-6" />}
+                title={`No listings found for “${query}”`}
+                description="Try different wording, a broader product type, or browse a collection."
+                actions={
+                  <Link to="/categories" className={buttonClasses("secondary")}>
+                    Browse collections
+                  </Link>
+                }
+              />
+            )}
+          </>
         )}
       </div>
-
-      <Footer />
-    </PageBackground>
+    </div>
   );
 };
 

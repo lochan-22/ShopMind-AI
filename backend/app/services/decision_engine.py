@@ -1126,13 +1126,19 @@ def generate_product_grounded_notes(p: dict[str, Any], category: str, query: str
     metrics = p.get("metrics") or {}
     cat_lower = (category or p.get("category") or "").lower()
     name = (p.get("name") or "").strip()
-    rating = p.get("rating") or 4.0
+    # Never invent a rating: only cite one the listing actually provides.
+    rating = p.get("rating")
+    rating_note = f" ({rating}★)" if rating else ""
     q_lower = query.lower()
 
     is_mouse = "mouse" in cat_lower or "mice" in cat_lower
     is_audio = any(k in cat_lower for k in ("headphone", "audio", "earbud", "earphone", "tws"))
     is_laptop = "laptop" in cat_lower or any(t in name.lower() for t in ("laptop", "notebook", "ideapad", "victus", "nitro", "tuf", "loq", "pavilion", "macbook", "predator", "katana"))
-    is_phone = any(k in cat_lower for k in ("phone", "smartphone", "mobile")) or any(t in name.lower() for t in ("phone", "smartphone", "galaxy", "pixel", "edge", "camon", "nord"))
+    # "headphones"/"earphones" contain "phone", so audio must be excluded first.
+    is_phone = not is_audio and (
+        any(k in cat_lower for k in ("phone", "smartphone", "mobile"))
+        or any(t in name.lower() for t in ("phone", "smartphone", "galaxy", "pixel", "edge", "camon", "nord"))
+    )
 
     why_rec = ""
     limitation = ""
@@ -1193,7 +1199,7 @@ def generate_product_grounded_notes(p: dict[str, Any], category: str, query: str
         if highlights:
             why_rec = f"Features {', '.join(highlights[:3])} delivering verified imaging and daily battery reliability."
         else:
-            why_rec = f"Balanced smartphone with high customer satisfaction ({rating}★) and competitive feature set under budget."
+            why_rec = f"Balanced smartphone with {f'strong customer feedback{rating_note} and ' if rating else ''}a competitive feature set under budget."
 
         # Model-specific evidence-backed limitations
         if is_refurb:
@@ -1227,7 +1233,7 @@ def generate_product_grounded_notes(p: dict[str, Any], category: str, query: str
             spec_parts.append(battery)
         if conn:
             spec_parts.append(conn)
-        why_rec = f"Offers {', '.join(spec_parts) if spec_parts else 'balanced acoustic sound profile'} with verified {rating}★ user rating."
+        why_rec = f"Offers {', '.join(spec_parts) if spec_parts else 'a balanced acoustic sound profile'}" + (f" with a verified {rating}★ user rating." if rating else ".")
         if not anc:
             limitation = "Passive acoustic isolation only; does not include Active Noise Cancellation (ANC)."
         else:
@@ -1252,7 +1258,7 @@ def generate_product_grounded_notes(p: dict[str, Any], category: str, query: str
             limitation = "Wired cable management recommended to avoid desk drag during rapid mouse flicks."
 
     else:
-        why_rec = f"High composite score based on feature match, customer rating ({rating}★), and competitive pricing."
+        why_rec = f"High composite score based on feature match, customer rating{rating_note}, and competitive pricing."
         limitation = "Detailed manufacturer warranty and full technical specsheet subject to seller verification."
 
     return why_rec, limitation

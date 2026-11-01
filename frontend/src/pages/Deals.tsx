@@ -1,226 +1,219 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { Tag, Sparkles, AlertCircle, RefreshCw, Loader2, ArrowUpDown } from "lucide-react";
-import Navbar from "../components/common/Navbar";
-import Footer from "../components/common/Footer";
-import PageBackground from "../components/common/PageBackground";
-import { ProductCard } from "../components/product/ProductCard";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { CircleAlert, Footprints, Headphones, Laptop, Radio, RefreshCw, Smartphone, Sparkles, Watch, type LucideIcon } from "lucide-react";
 import { searchProducts, type Product } from "../services/productService";
+import { ProductCard } from "../components/product/ProductCard";
+import { ProductGridSkeleton } from "../components/ui/Skeleton";
+import { StateView } from "../components/ui/StateView";
+import { Reveal } from "../components/ui/Reveal";
+import { Accent } from "../components/ui/SectionHeading";
+import { Button, buttonClasses } from "../components/ui/Button";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import { formatPrice } from "../utils/format";
+import { getErrorMessage } from "../utils/errors";
+import { productKey } from "../utils/product";
+import { cn } from "../utils/cn";
 
-interface DealCategory {
+interface Segment {
   id: string;
   label: string;
-  emoji: string;
+  icon: LucideIcon;
   query: string;
+  ask: string;
 }
 
-const DEAL_CATEGORIES: DealCategory[] = [
-  { id: "all", label: "All Featured", emoji: "🔥", query: "popular electronics gadgets India" },
-  { id: "smartphones", label: "Smartphones", emoji: "📱", query: "best price smartphones India" },
-  { id: "laptops", label: "Laptops", emoji: "💻", query: "best laptop deals India" },
-  { id: "audio", label: "Audio & Headphones", emoji: "🎧", query: "best wireless headphones India" },
-  { id: "wearables", label: "Smart Watches", emoji: "⌚", query: "smartwatch deals India" },
-  { id: "footwear", label: "Footwear", emoji: "👟", query: "running shoes India" },
+const SEGMENTS: Segment[] = [
+  { id: "all", label: "Popular tech", icon: Radio, query: "popular electronics gadgets India", ask: "Best value electronics gadgets right now" },
+  { id: "smartphones", label: "Smartphones", icon: Smartphone, query: "best price smartphones India", ask: "Best value smartphone right now" },
+  { id: "laptops", label: "Laptops", icon: Laptop, query: "best laptop deals India", ask: "Best value laptop right now" },
+  { id: "audio", label: "Audio", icon: Headphones, query: "best wireless headphones India", ask: "Best wireless headphones for the price" },
+  { id: "wearables", label: "Smartwatches", icon: Watch, query: "smartwatch deals India", ask: "Best value smartwatch right now" },
+  { id: "footwear", label: "Running shoes", icon: Footprints, query: "running shoes India", ask: "Best running shoes for the price" },
 ];
 
-type SortOption = "default" | "price-asc" | "price-desc" | "rating-desc";
+type SortKey = "default" | "price_asc" | "price_desc" | "rating";
 
-const Deals: React.FC = () => {
-  const [activeCategory, setActiveCategory] = useState<DealCategory>(DEAL_CATEGORIES[0]);
-  const [productsCache, setProductsCache] = useState<Record<string, Product[]>>({});
-  const [loading, setLoading] = useState<boolean>(true);
+/** Kept for the session so switching segments doesn't refetch. */
+const segmentCache = new Map<string, Product[]>();
+
+const median = (values: number[]) => {
+  if (!values.length) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+};
+
+const Deals = () => {
+  useDocumentTitle("Live Market");
+  const [segment, setSegment] = useState<Segment>(SEGMENTS[0]);
+  const [products, setProducts] = useState<Product[]>(() => segmentCache.get(SEGMENTS[0].id) ?? []);
+  const [loading, setLoading] = useState(() => !segmentCache.has(SEGMENTS[0].id));
   const [error, setError] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<SortOption>("default");
+  const [refresh, setRefresh] = useState(0);
+  const [sortBy, setSortBy] = useState<SortKey>("default");
 
-  const fetchDealsForCategory = async (category: DealCategory, forceRefresh = false) => {
-    if (!forceRefresh && productsCache[category.id] && productsCache[category.id].length > 0) {
+  useEffect(() => {
+    const cached = segmentCache.get(segment.id);
+    if (cached && refresh === 0) {
+      setProducts(cached);
       setLoading(false);
       setError(null);
       return;
     }
-
+    let cancelled = false;
     setLoading(true);
     setError(null);
+    searchProducts(segment.query)
+      .then((data) => {
+        if (cancelled) return;
+        segmentCache.set(segment.id, data);
+        setProducts(data);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) setError(getErrorMessage(err, "Live market data is unavailable right now."));
+      })
+      .finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [segment, refresh]);
 
-    try {
-      const data = await searchProducts(category.query);
-      setProductsCache((prev) => ({
-        ...prev,
-        [category.id]: data,
-      }));
-    } catch {
-      setError("Live deals are temporarily unavailable. Please try again in a few moments.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void fetchDealsForCategory(activeCategory);
-  }, [activeCategory]);
-
-  const rawProducts = productsCache[activeCategory.id] || [];
-
-  const sortedProducts = useMemo(() => {
-    const list = [...rawProducts];
-    if (sortBy === "price-asc") {
-      return list.sort((a, b) => a.price - b.price);
-    }
-    if (sortBy === "price-desc") {
-      return list.sort((a, b) => b.price - a.price);
-    }
-    if (sortBy === "rating-desc") {
-      return list.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
-    }
+  const sorted = useMemo(() => {
+    const list = [...products];
+    if (sortBy === "price_asc") list.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
+    if (sortBy === "price_desc") list.sort((a, b) => (b.price ?? -Infinity) - (a.price ?? -Infinity));
+    if (sortBy === "rating") list.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
     return list;
-  }, [rawProducts, sortBy]);
+  }, [products, sortBy]);
+
+  // Price statistics computed from the listings on screen.
+  const stats = useMemo(() => {
+    const prices = products.map((product) => product.price).filter((price): price is number => price != null && price > 0);
+    return {
+      count: products.length,
+      low: prices.length ? Math.min(...prices) : null,
+      median: median(prices),
+      retailers: new Set(products.map((product) => product.retailer).filter(Boolean)).size,
+    };
+  }, [products]);
 
   return (
-    <PageBackground>
-      <Navbar />
-
-      <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        {/* Page Header */}
-        <div className="mb-8">
-          <div className="inline-flex items-center gap-2 rounded-full border border-purple-200 bg-purple-50/80 px-3.5 py-1 text-xs font-bold text-[#7C3AED] mb-3">
-            <Sparkles className="h-3.5 w-3.5" />
-            <span>Live Market Offers · Google Shopping India</span>
-          </div>
-
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#0D0B1E]">
-            Featured Deals & Offers
-          </h1>
-
-          <p className="mt-2 text-sm sm:text-base text-[#7A7068] max-w-2xl leading-relaxed">
-            Real-time pricing and multi-seller offers retrieved across major Indian merchants. Verified listings without artificial markups or fake discount claims.
-          </p>
+    <div className="pb-24">
+      <section className="noise relative overflow-hidden bg-night pb-14 pt-32 text-white sm:pt-40">
+        <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+          <div className="grid-fade absolute inset-0" />
+          <div className="animate-float-a absolute -left-24 top-0 h-96 w-96 rounded-full bg-jade-500/25 blur-[110px]" />
+          <div className="animate-float-b absolute -right-24 top-10 h-96 w-96 rounded-full bg-sky-aurora/20 blur-[110px]" />
         </div>
-
-        {/* Category Pills & Sorting Bar */}
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-[#E8E2D9] pb-6">
-          {/* Category Filter Chips */}
-          <div className="flex flex-wrap items-center gap-2">
-            {DEAL_CATEGORIES.map((cat) => {
-              const active = cat.id === activeCategory.id;
-              return (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => {
-                    if (cat.id !== activeCategory.id) {
-                      setActiveCategory(cat);
-                    }
-                  }}
-                  className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs sm:text-sm font-semibold transition-all duration-150 ${
-                    active
-                      ? "bg-[#7C3AED] text-white shadow-md shadow-purple-500/20 scale-[1.02]"
-                      : "bg-white text-[#5A5248] border border-[#E8E2D9] hover:border-purple-200 hover:text-[#7C3AED]"
-                  }`}
-                >
-                  <span>{cat.emoji}</span>
-                  <span>{cat.label}</span>
-                </button>
-              );
-            })}
+        <div className="container-x relative">
+          <div className="rise-in max-w-2xl">
+            <p className="eyebrow flex items-center gap-2 text-white/50">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="pulse-ring absolute inset-0 rounded-full bg-jade-300" />
+                <span className="relative h-1.5 w-1.5 rounded-full bg-jade-300" />
+              </span>
+              Live market
+            </p>
+            <h1 className="mt-4 text-[2.5rem] font-semibold leading-[1.02] tracking-[-0.045em] sm:text-[4rem]">
+              What the market is <Accent aurora>charging today</Accent>
+            </h1>
+            <p className="mt-5 text-[15.5px] leading-relaxed text-white/55">
+              Current listings across popular segments, straight from retailers. Prices are shown exactly as listed — compare them here, then let ShopMind rank them.
+            </p>
           </div>
 
-          {/* Sort Control */}
-          <div className="flex items-center gap-2 self-end sm:self-auto">
-            <ArrowUpDown className="h-4 w-4 text-[#A89F95]" />
+          <div className="no-scrollbar -mx-4 mt-10 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0" role="tablist" aria-label="Market segments">
+            {SEGMENTS.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                aria-selected={segment.id === item.id}
+                onClick={() => {
+                  setSegment(item);
+                  setSortBy("default");
+                  setRefresh(0);
+                }}
+                className={cn(
+                  "inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-[13px] transition-[background-color,border-color,color] duration-300",
+                  segment.id === item.id ? "border-white bg-white text-ink" : "border-white/12 bg-white/[0.04] text-white/70 hover:border-white/25 hover:text-white",
+                )}
+              >
+                <item.icon className="h-4 w-4" /> {item.label}
+              </button>
+            ))}
+          </div>
+
+          <dl className="mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-4">
+            {[
+              ["Listings", loading ? "—" : String(stats.count)],
+              ["Lowest price", loading ? "—" : (formatPrice(stats.low) ?? "—")],
+              ["Median price", loading ? "—" : (formatPrice(stats.median) ?? "—")],
+              ["Retailers", loading ? "—" : String(stats.retailers)],
+            ].map(([label, value]) => (
+              <div key={label} className="bg-night/80 px-5 py-4">
+                <dt className="text-[11.5px] text-white/45">{label}</dt>
+                <dd className="tabular mt-1 text-xl font-semibold tracking-tight">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+
+      <section className="container-x mt-10">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-3">
+            <Link to={`/search?q=${encodeURIComponent(segment.ask)}`} className={buttonClasses("primary", "md")}>
+              <Sparkles className="h-4 w-4 text-jade-300" /> Rank {segment.label.toLowerCase()} for me
+            </Link>
+            <Button variant="ghost" size="md" onClick={() => setRefresh((value) => value + 1)} disabled={loading} icon={<RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />}>
+              Refresh
+            </Button>
+          </div>
+          <label className="flex items-center gap-2 text-[13px] text-muted">
+            Sort
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="rounded-xl border border-[#E8E2D9] bg-white px-3 py-1.5 text-xs font-medium text-[#0D0B1E] shadow-xs outline-none transition focus:border-purple-400"
+              onChange={(event) => setSortBy(event.target.value as SortKey)}
+              className="h-10 rounded-full border border-line bg-surface px-4 text-[13px] font-medium text-ink outline-none focus:border-jade-400"
             >
-              <option value="default">Default: Best Match</option>
-              <option value="price-asc">Price: Low to High</option>
-              <option value="price-desc">Price: High to Low</option>
-              <option value="rating-desc">Highest Rated</option>
+              <option value="default">Retailer order</option>
+              <option value="price_asc">Price: low to high</option>
+              <option value="price_desc">Price: high to low</option>
+              <option value="rating">Highest rated</option>
             </select>
-          </div>
+          </label>
         </div>
 
-        {/* Loading State */}
-        {loading && (
-          <div className="flex flex-col items-center justify-center rounded-3xl border border-[#E8E2D9] bg-white/80 py-24 text-center shadow-xs backdrop-blur-xs">
-            <Loader2 className="h-8 w-8 animate-spin text-[#7C3AED]" />
-            <p className="mt-4 text-sm sm:text-base font-semibold text-[#0D0B1E]">
-              Fetching live offers for {activeCategory.label}…
-            </p>
-            <p className="mt-1 text-xs text-[#7A7068]">
-              Comparing real-time prices across verified sellers
-            </p>
-          </div>
-        )}
-
-        {/* Error State with Retry Button */}
+        {loading && <ProductGridSkeleton count={8} />}
         {!loading && error && (
-          <div className="flex flex-col items-center justify-center rounded-3xl border border-red-200 bg-red-50/70 p-8 text-center shadow-xs">
-            <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
-            <p className="text-sm font-bold text-red-900">{error}</p>
-            <p className="mt-1 text-xs text-red-700">
-              The live product provider could not be reached. Click below to retry.
-            </p>
-            <button
-              type="button"
-              onClick={() => void fetchDealsForCategory(activeCategory, true)}
-              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-xs sm:text-sm font-bold text-white shadow-xs transition hover:bg-red-700"
-            >
-              <RefreshCw className="h-3.5 w-3.5" />
-              <span>Retry Search</span>
-            </button>
+          <StateView
+            tone="danger"
+            icon={<CircleAlert className="h-6 w-6" />}
+            title="Market data didn't load"
+            description={error}
+            actions={
+              <Button onClick={() => setRefresh((value) => value + 1)} icon={<RefreshCw className="h-4 w-4" />}>
+                Try again
+              </Button>
+            }
+          />
+        )}
+        {!loading && !error && products.length === 0 && (
+          <StateView icon={<Radio className="h-6 w-6" />} title="No listings in this segment right now" description="Retailers returned nothing for this segment. Try another, or refresh in a moment." />
+        )}
+        {!loading && !error && products.length > 0 && (
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
+            {sorted.map((product, index) => (
+              <Reveal key={productKey(product)} index={index % 12}>
+                <ProductCard product={product} candidates={products} eager={index < 4} />
+              </Reveal>
+            ))}
           </div>
         )}
-
-        {/* Empty State */}
-        {!loading && !error && sortedProducts.length === 0 && (
-          <div className="flex flex-col items-center justify-center rounded-3xl border border-[#E8E2D9] bg-white p-12 text-center shadow-xs">
-            <Tag className="h-8 w-8 text-[#A89F95] mb-2" />
-            <p className="text-base font-bold text-[#0D0B1E]">
-              No active offers found for this category.
-            </p>
-            <p className="mt-1 text-xs text-[#7A7068]">
-              Try choosing another department or return to the main catalog.
-            </p>
-            <button
-              type="button"
-              onClick={() => void fetchDealsForCategory(activeCategory, true)}
-              className="mt-5 rounded-xl border border-[#E8E2D9] bg-white px-4 py-2 text-xs font-semibold text-[#5A5248] hover:border-purple-300"
-            >
-              Refresh Listings
-            </button>
-          </div>
-        )}
-
-        {/* Products Grid */}
-        {!loading && !error && sortedProducts.length > 0 && (
-          <div>
-            <div className="mb-5 flex items-center justify-between text-xs text-[#7A7068]">
-              <span>
-                Showing <strong className="text-[#0D0B1E]">{sortedProducts.length}</strong> live offers in{" "}
-                <strong className="text-[#7C3AED]">{activeCategory.label}</strong>
-              </span>
-              <span className="rounded-full bg-orange-50 px-3 py-1 font-semibold text-[#EA580C] border border-orange-200">
-                Live Google Shopping India
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 sm:gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {sortedProducts.map((product) => (
-                <ProductCard
-                  key={product.product_id ?? product.id}
-                  product={product}
-                  navigationState={{ comparisonCandidates: sortedProducts }}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-      </main>
-
-      <Footer />
-    </PageBackground>
+      </section>
+    </div>
   );
 };
 
 export default Deals;
-

@@ -1,49 +1,34 @@
-import { forwardRef, type HTMLAttributes } from "react";
+import type { ReactNode } from "react";
+import { cn } from "../../utils/cn";
 
-import type { BadgeVariant, ComponentSize } from "@/components/ui/types";
-import { cn } from "@/utils/cn";
+export type BadgeTone = "neutral" | "jade" | "gold" | "warn" | "danger" | "dark" | "outline";
 
-const variantClasses: Record<BadgeVariant, string> = {
-  default: "bg-surface-muted text-foreground border-border",
-  accent: "bg-accent-muted text-accent-700 border-accent-200",
-  secondary: "bg-secondary-100 text-secondary-700 border-secondary-200",
-  success: "bg-success-muted text-success border-green-200",
-  warning: "bg-warning-muted text-warning border-amber-200",
-  error: "bg-error-muted text-error border-red-200",
-  outline: "bg-transparent text-muted-strong border-border",
+const tones: Record<BadgeTone, string> = {
+  neutral: "bg-sunken text-ink-2",
+  jade: "bg-jade-50 text-jade-700 ring-1 ring-inset ring-jade-200/70",
+  gold: "bg-gold-soft text-gold ring-1 ring-inset ring-gold/20",
+  warn: "bg-warn-soft text-warn ring-1 ring-inset ring-warn/15",
+  danger: "bg-danger-soft text-danger ring-1 ring-inset ring-danger/15",
+  dark: "bg-ink text-white",
+  outline: "bg-surface/80 text-ink-2 ring-1 ring-inset ring-line backdrop-blur",
 };
 
-const sizeClasses: Record<Exclude<ComponentSize, "lg" | "xl">, string> = {
-  xs: "px-1.5 py-0 text-overline",
-  sm: "px-2 py-0.5 text-caption",
-  md: "px-2.5 py-0.5 text-label",
-};
-
-export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
-  variant?: BadgeVariant;
-  size?: Exclude<ComponentSize, "lg" | "xl">;
-  pill?: boolean;
+interface BadgeProps {
+  children: ReactNode;
+  tone?: BadgeTone;
+  icon?: ReactNode;
+  className?: string;
 }
 
-export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
-  (
-    { variant = "default", size = "sm", pill = true, className, ...props },
-    ref,
-  ) => {
-    return (
-      <span
-        ref={ref}
-        className={cn(
-          "inline-flex items-center border font-medium whitespace-nowrap",
-          pill ? "rounded-pill" : "rounded-sm",
-          variantClasses[variant],
-          sizeClasses[size],
-          className,
-        )}
-        {...props}
-      />
-    );
-  },
+export const Badge = ({ children, tone = "neutral", icon, className }: BadgeProps) => (
+  <span
+    className={cn(
+      "inline-flex max-w-full items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-medium leading-none",
+      tones[tone],
+      className,
+    )}
+  >
+    {icon}
+    <span className="truncate">{children}</span>
+  </span>
 );
-
-Badge.displayName = "Badge";
